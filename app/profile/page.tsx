@@ -4,6 +4,8 @@ import { useEffect, useState } from "react"
 import { useRouter }           from "next/navigation"
 import { createClient }        from "@/lib/supabase/client"
 import { BottomNav }           from "@/components/BottomNav"
+import { BOARD_THEMES, PIECE_SETS } from "@/components/chess/themes"
+import type { ThemeId, PieceSetId } from "@/components/chess/themes"
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -23,6 +25,8 @@ export default function ProfilePage() {
   const [club,            setClub]            = useState<string | null>(null)
   const [currentRating,   setCurrentRating]   = useState<number | null>(null)
   const [fideTitle,       setFideTitle]       = useState<string | null>(null)
+  const [boardTheme,      setBoardTheme]      = useState<ThemeId>("classic")
+  const [pieceSet,        setPieceSet]        = useState<PieceSetId>("standard")
 
   useEffect(() => {
     async function load() {
@@ -40,6 +44,15 @@ export default function ProfilePage() {
           .select("id, fide_id, fide_title, current_rating, admission_number, date_of_birth, guardian_name, guardian_phone, schools(name), clubs(name)")
           .eq("profile_id", session.user.id).maybeSingle(),
       ])
+
+      // load cosmetic preferences
+      if (playerRes.data?.id) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: gp } = await (supabase.from("player_game_profiles") as any)
+          .select("board_theme, piece_set").eq("player_id", playerRes.data.id).maybeSingle()
+        if (gp?.board_theme) setBoardTheme(gp.board_theme as ThemeId)
+        if (gp?.piece_set)   setPieceSet(gp.piece_set as PieceSetId)
+      }
 
       setFullName(profileRes.data?.full_name ?? "")
       const pl = playerRes.data
@@ -88,6 +101,12 @@ export default function ProfilePage() {
         })
         .eq("id", playerId)
       if (playerErr) errors.push(playerErr.message)
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: gpErr } = await (supabase.from("player_game_profiles") as any)
+        .update({ board_theme: boardTheme, piece_set: pieceSet })
+        .eq("player_id", playerId)
+      if (gpErr) errors.push(gpErr.message)
     }
 
     setSaveMsg(errors.length ? `Error: ${errors.join("; ")}` : "Saved successfully!")
@@ -210,6 +229,62 @@ export default function ProfilePage() {
                     className="w-full rounded-xl border border-stone-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent"
                     placeholder="+254 700 000 000"
                   />
+                </div>
+              </div>
+
+              {/* Board theme picker */}
+              <div className="bg-white rounded-2xl border border-stone-200 p-4 space-y-4 shadow-sm">
+                <h2 className="font-bold text-stone-800 text-sm">Board Theme</h2>
+                <div className="grid grid-cols-2 gap-2">
+                  {(Object.values(BOARD_THEMES)).map(t => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setBoardTheme(t.id)}
+                      className={`rounded-xl border-2 p-2 flex items-center gap-2 transition-all ${
+                        boardTheme === t.id
+                          ? "border-green-700 bg-green-50"
+                          : "border-stone-200 hover:border-stone-300"
+                      }`}
+                    >
+                      {/* mini board preview */}
+                      <div className="grid grid-cols-4 w-8 h-8 rounded overflow-hidden flex-shrink-0">
+                        {Array.from({ length: 16 }, (_, i) => (
+                          <div key={i} style={{ background: (Math.floor(i / 4) + i) % 2 === 0 ? t.lightSquare : t.darkSquare }} />
+                        ))}
+                      </div>
+                      <div className="text-left min-w-0">
+                        <p className="text-xs font-semibold text-stone-800 leading-tight truncate">{t.displayName}</p>
+                        <p className="text-[10px] text-stone-400">{t.emoji}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Piece set picker */}
+              <div className="bg-white rounded-2xl border border-stone-200 p-4 space-y-4 shadow-sm">
+                <h2 className="font-bold text-stone-800 text-sm">Piece Style</h2>
+                <div className="grid grid-cols-2 gap-2">
+                  {(Object.values(PIECE_SETS)).map(ps => (
+                    <button
+                      key={ps.id}
+                      type="button"
+                      onClick={() => setPieceSet(ps.id)}
+                      className={`rounded-xl border-2 p-3 flex items-center gap-2 transition-all ${
+                        pieceSet === ps.id
+                          ? "border-green-700 bg-green-50"
+                          : "border-stone-200 hover:border-stone-300"
+                      }`}
+                    >
+                      <span className="text-xl" style={{ color: ps.whitePiece, textShadow: ps.whiteShadow }}>♔</span>
+                      <span className="text-xl" style={{ color: ps.blackPiece, textShadow: ps.blackShadow }}>♚</span>
+                      <div className="text-left min-w-0 ml-1">
+                        <p className="text-xs font-semibold text-stone-800 leading-tight truncate">{ps.displayName}</p>
+                        <p className="text-[10px] text-stone-400">{ps.emoji}</p>
+                      </div>
+                    </button>
+                  ))}
                 </div>
               </div>
 

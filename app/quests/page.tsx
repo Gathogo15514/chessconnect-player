@@ -1,9 +1,11 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState } from "react"
 import { useRouter }           from "next/navigation"
 import { createClient }        from "@/lib/supabase/client"
 import { BottomNav }           from "@/components/BottomNav"
+import ChessBoard              from "@/components/chess/ChessBoard"
+import type { ThemeId, PieceSetId } from "@/components/chess/themes"
 
 type Node = {
   id:               string
@@ -58,188 +60,18 @@ const NODE_COLOR: Record<string, string> = {
   story:       "bg-stone-100 text-stone-600 border-stone-200",
 }
 
-// ── Minimal chess engine ────────────────────────────────────────────────────
-const FILES = ["a","b","c","d","e","f","g","h"]
-const PIECES: Record<string, string> = {
-  K:"♔",Q:"♕",R:"♖",B:"♗",N:"♘",P:"♙",
-  k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟",
-}
-
-function parseFen(fen: string) {
-  const board: (string|null)[][] = Array.from({length:8}, () => Array(8).fill(null))
-  const rows = fen.split(" ")[0].split("/")
-  rows.forEach((row, r) => {
-    let c = 0
-    for (const ch of row) {
-      if (/\d/.test(ch)) { c += parseInt(ch) }
-      else { board[r][c] = ch; c++ }
-    }
-  })
-  return board
-}
-
-function algToCoord(alg: string): [number,number] {
-  const file = FILES.indexOf(alg[0])
-  const rank = 8 - parseInt(alg[1])
-  return [rank, file]
-}
-
-function PuzzleBoard({ fen, solutionMoves, onSolve }: {
-  fen: string
-  solutionMoves: string[]
-  onSolve: (success: boolean) => void
-}) {
-  const [board,     setBoard]     = useState(() => parseFen(fen))
-  const [selected,  setSelected]  = useState<[number,number]|null>(null)
-  const [moveIdx,   setMoveIdx]   = useState(0)
-  const [feedback,  setFeedback]  = useState<"correct"|"wrong"|"done"|null>(null)
-  const [solved,    setSolved]    = useState(false)
-
-  const applyMove = useCallback((brd: (string|null)[][], from: [number,number], to: [number,number]) => {
-    const next = brd.map(r => [...r])
-    next[to[0]][to[1]] = next[from[0]][from[1]]
-    next[from[0]][from[1]] = null
-    return next
-  }, [])
-
-  function handleSquare(r: number, c: number) {
-    if (solved || feedback === "done") return
-
-    if (selected) {
-      const [sr, sc] = selected
-      if (sr === r && sc === c) { setSelected(null); return }
-
-      const from = `${FILES[sc]}${8-sr}`
-      const to   = `${FILES[c]}${8-r}`
-      const move = `${from}${to}`
-      const expected = solutionMoves[moveIdx]
-
-      if (move === expected) {
-        const newBoard = applyMove(board, selected, [r,c])
-        setBoard(newBoard)
-        setSelected(null)
-
-        const nextIdx = moveIdx + 1
-        if (nextIdx >= solutionMoves.length) {
-          setFeedback("done")
-          setSolved(true)
-          setTimeout(() => onSolve(true), 800)
-        } else {
-          setFeedback("correct")
-          setMoveIdx(nextIdx)
-          setTimeout(() => {
-            setFeedback(null)
-            // play opponent response
-            const oppMove = solutionMoves[nextIdx]
-            if (oppMove) {
-              const oppFrom = algToCoord(oppMove.slice(0,2))
-              const oppTo   = algToCoord(oppMove.slice(2,4))
-              setBoard(prev => applyMove(prev, oppFrom, oppTo))
-              setMoveIdx(nextIdx + 1)
-            }
-          }, 700)
-        }
-      } else {
-        setFeedback("wrong")
-        setSelected(null)
-        setTimeout(() => setFeedback(null), 900)
-      }
-    } else {
-      if (board[r][c]) setSelected([r, c])
-    }
-  }
-
-  const activeColor = fen.split(" ")[1] === "b" ? "black" : "white"
-
-  return (
-    <div className="flex flex-col items-center gap-3">
-      {/* Feedback banner */}
-      {feedback && (
-        <div className={`w-full text-center rounded-xl py-2 text-sm font-bold ${
-          feedback === "correct" ? "bg-emerald-100 text-emerald-700" :
-          feedback === "done"    ? "bg-green-800 text-white" :
-          "bg-red-100 text-red-700"
-        }`}>
-          {feedback === "correct" ? "✓ Correct!" : feedback === "done" ? "🎉 Puzzle solved!" : "✗ Try again"}
-        </div>
-      )}
-
-      {/* Board */}
-      <div className="border-2 border-stone-700 rounded overflow-hidden shadow-lg">
-        {board.map((row, r) => (
-          <div key={r} className="flex">
-            {row.map((piece, c) => {
-              const isLight    = (r + c) % 2 === 0
-              const isSel      = selected?.[0] === r && selected?.[1] === c
-              const isHint     = selected && !feedback &&
-                                  moveIdx < solutionMoves.length &&
-                                  solutionMoves[moveIdx].slice(0,2) === `${FILES[selected[1]]}${8-selected[0]}` &&
-                                  solutionMoves[moveIdx].slice(2,4) === `${FILES[c]}${8-r}`
-              return (
-                <button
-                  key={c}
-                  onClick={() => handleSquare(r,c)}
-                  className={`w-10 h-10 flex items-center justify-center text-xl relative transition-colors ${
-                    isSel   ? "bg-amber-400" :
-                    isLight ? "bg-amber-100" : "bg-green-800"
-                  }`}
-                >
-                  {isHint && (
-                    <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <span className={`w-3 h-3 rounded-full opacity-50 ${piece ? "border-2 border-amber-400" : "bg-amber-400"}`} />
-                    </span>
-                  )}
-                  {piece && (
-                    <span className={`select-none leading-none z-10 ${
-                      piece === piece.toUpperCase() ? "text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.9)]" : "text-stone-900 drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)]"
-                    }`}>
-                      {PIECES[piece] ?? piece}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        ))}
-      </div>
-
-      {/* Coordinates hint */}
-      <p className="text-xs text-stone-400">{activeColor === "white" ? "White" : "Black"} to move · Tap piece then target</p>
-
-      {/* Show solution */}
-      {feedback === "wrong" && (
-        <button
-          onClick={() => {
-            const mv = solutionMoves[moveIdx]
-            if (mv) {
-              const from = algToCoord(mv.slice(0,2))
-              const to   = algToCoord(mv.slice(2,4))
-              setBoard(prev => applyMove(prev, from, to))
-              setMoveIdx(moveIdx + 1)
-              if (moveIdx + 1 >= solutionMoves.length) {
-                setFeedback("done"); setSolved(true); setTimeout(() => onSolve(false), 800)
-              } else setFeedback(null)
-            }
-          }}
-          className="text-xs text-stone-400 underline"
-        >
-          Show next move
-        </button>
-      )}
-    </div>
-  )
-}
-
 // ── Puzzle modal ─────────────────────────────────────────────────────────────
-function PuzzleModal({ node, playerId, onClose }: {
-  node: Node
-  playerId: string
-  onClose: (completed: boolean) => void
+function PuzzleModal({ node, playerId, themeId, pieceSetId, onClose }: {
+  node:      Node
+  playerId:  string
+  themeId:   ThemeId
+  pieceSetId: PieceSetId
+  onClose:   (completed: boolean) => void
 }) {
-  const [result, setResult] = useState<"success"|"fail"|null>(null)
+  const [result, setResult] = useState<"success" | "fail" | null>(null)
 
-  async function handleSolve(success: boolean) {
-    setResult(success ? "success" : "fail")
+  async function handleSolve() {
+    setResult("success")
     const supabase = createClient()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const existing = await (supabase.from("quest_completions") as any)
@@ -248,9 +80,27 @@ function PuzzleModal({ node, playerId, onClose }: {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabase.from("quest_completions") as any).insert({
         player_id: playerId, quest_node_id: node.id,
-        status: "completed", attempts: 1, hints_used: success ? 0 : 1,
-        xp_earned: success ? node.xp_reward : Math.round(node.xp_reward * 0.5),
-        gold_earned: success ? node.gold_reward : 0,
+        status: "completed", attempts: 1, hints_used: 0,
+        xp_earned: node.xp_reward, gold_earned: node.gold_reward,
+        started_at: new Date().toISOString(),
+        completed_at: new Date().toISOString(),
+      })
+    }
+    setTimeout(() => onClose(true), 1400)
+  }
+
+  async function markComplete() {
+    setResult("success")
+    const supabase = createClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const existing = await (supabase.from("quest_completions") as any)
+      .select("id").eq("player_id", playerId).eq("quest_node_id", node.id).maybeSingle()
+    if (!existing.data) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from("quest_completions") as any).insert({
+        player_id: playerId, quest_node_id: node.id,
+        status: "completed", attempts: 1, hints_used: 0,
+        xp_earned: node.xp_reward, gold_earned: node.gold_reward,
         started_at: new Date().toISOString(),
         completed_at: new Date().toISOString(),
       })
@@ -268,28 +118,30 @@ function PuzzleModal({ node, playerId, onClose }: {
           </div>
           <button onClick={() => onClose(false)} className="text-green-300 hover:text-white text-xl leading-none">×</button>
         </div>
-        <div className="p-4">
+        <div className="p-4 flex flex-col items-center">
           {result ? (
-            <div className={`rounded-xl py-8 text-center ${result === "success" ? "bg-emerald-50" : "bg-amber-50"}`}>
-              <span className="text-5xl">{result === "success" ? "🎉" : "📚"}</span>
-              <p className={`mt-3 font-bold ${result === "success" ? "text-emerald-700" : "text-amber-700"}`}>
-                {result === "success" ? "Brilliant!" : "Good effort!"}
-              </p>
-              <p className="text-xs text-stone-400 mt-1">+{result === "success" ? node.xp_reward : Math.round(node.xp_reward * 0.5)} XP earned</p>
+            <div className="rounded-xl py-8 text-center w-full bg-emerald-50">
+              <span className="text-5xl">🎉</span>
+              <p className="mt-3 font-bold text-emerald-700">Brilliant!</p>
+              <p className="text-xs text-stone-400 mt-1">+{node.xp_reward} XP earned</p>
             </div>
           ) : node.fen_position && node.solution_moves ? (
-            <PuzzleBoard
+            <ChessBoard
               fen={node.fen_position}
               solutionMoves={node.solution_moves}
+              themeId={themeId}
+              pieceSetId={pieceSetId}
               onSolve={handleSolve}
+              onCaptureSuccess={() => {}}
+              onNodeCleared={() => {}}
             />
           ) : (
-            <div className="py-10 text-center">
+            <div className="py-10 text-center w-full">
               <span className="text-4xl">{NODE_ICON[node.node_type] ?? "⚔️"}</span>
               <p className="mt-3 text-stone-700 font-medium">{node.title}</p>
               <p className="text-sm text-stone-400 mt-1">Complete this {node.node_type} to earn {node.xp_reward} XP and {node.gold_reward} 🪙</p>
               <button
-                onClick={() => handleSolve(true)}
+                onClick={markComplete}
                 className="mt-4 px-5 py-2 bg-green-800 text-white text-sm font-bold rounded-xl hover:bg-green-700"
               >
                 Mark Complete
@@ -311,14 +163,16 @@ export default function QuestsPage() {
   const [streak,      setStreak]      = useState(0)
   const [srDue,       setSrDue]       = useState(0)
   const [loading,     setLoading]     = useState(true)
-  const [playerId,    setPlayerId]    = useState<string|null>(null)
-  const [activeNode,  setActiveNode]  = useState<Node|null>(null)
+  const [playerId,    setPlayerId]    = useState<string | null>(null)
+  const [activeNode,  setActiveNode]  = useState<Node | null>(null)
+  const [themeId,     setThemeId]     = useState<ThemeId>("classic")
+  const [pieceSetId,  setPieceSetId]  = useState<PieceSetId>("standard")
 
   async function loadData(supabase: ReturnType<typeof createClient>, pid: string) {
     const [gpRes, assignRes, srRes] = await Promise.all([
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (supabase.from("player_game_profiles") as any)
-        .select("current_level, gold_balance, streak_current")
+        .select("current_level, gold_balance, streak_current, board_theme, piece_set")
         .eq("player_id", pid).maybeSingle(),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (supabase.from("quest_assignments") as any)
@@ -334,9 +188,11 @@ export default function QuestsPage() {
     setGold(gpRes.data?.gold_balance ?? 0)
     setStreak(gpRes.data?.streak_current ?? 0)
     setSrDue((srRes.data ?? []).length)
+    if (gpRes.data?.board_theme) setThemeId(gpRes.data.board_theme as ThemeId)
+    if (gpRes.data?.piece_set)   setPieceSetId(gpRes.data.piece_set as PieceSetId)
 
     const raw = assignRes.data ?? []
-    const enriched: Assignment[] = await Promise.all(raw.map(async (a: {id: string; campaign_id: string; expires_at: string | null; quest_campaigns: Campaign | null}) => {
+    const enriched: Assignment[] = await Promise.all(raw.map(async (a: { id: string; campaign_id: string; expires_at: string | null; quest_campaigns: Campaign | null }) => {
       const [nodesRes, compRes] = await Promise.all([
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (supabase.from("quest_nodes") as any)
@@ -374,8 +230,8 @@ export default function QuestsPage() {
     router.replace("/login")
   }
 
-  function handleNodeClick(n: Node, lvl: number) {
-    if (n.is_locked && lvl < (n.unlock_level ?? 0)) return
+  function handleNodeClick(n: Node) {
+    if (n.is_locked && level < (n.unlock_level ?? 0)) return
     setActiveNode(n)
   }
 
@@ -390,7 +246,13 @@ export default function QuestsPage() {
   return (
     <div className="min-h-screen bg-stone-50 pb-20">
       {activeNode && playerId && (
-        <PuzzleModal node={activeNode} playerId={playerId} onClose={handleModalClose} />
+        <PuzzleModal
+          node={activeNode}
+          playerId={playerId}
+          themeId={themeId}
+          pieceSetId={pieceSetId}
+          onClose={handleModalClose}
+        />
       )}
 
       <header className="bg-green-900 text-white px-4 py-3 flex items-center justify-between">
@@ -491,7 +353,7 @@ export default function QuestsPage() {
                         return (
                           <button
                             key={n.id}
-                            onClick={() => !locked && handleNodeClick(n, level)}
+                            onClick={() => !locked && handleNodeClick(n)}
                             disabled={locked}
                             className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
                               isCurrent ? "bg-amber-50 hover:bg-amber-100" :
@@ -533,7 +395,7 @@ export default function QuestsPage() {
                     {a.expires_at && (
                       <div className="px-4 py-2 bg-stone-50 border-t border-stone-100">
                         <p className="text-[10px] text-stone-400">
-                          Expires {new Date(a.expires_at).toLocaleDateString("en-KE", { day:"numeric", month:"short" })}
+                          Expires {new Date(a.expires_at).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}
                         </p>
                       </div>
                     )}
