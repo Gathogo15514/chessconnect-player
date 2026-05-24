@@ -1,0 +1,5 @@
+{
+  "name": "chessconnect-player",
+  "regions": ["jnb1"],
+  "framework": "nextjs"
+}
