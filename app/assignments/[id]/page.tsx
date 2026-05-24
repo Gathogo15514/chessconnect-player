@@ -51,18 +51,25 @@ export default function AssignmentWorkspacePage({ params }: { params: Promise<{ 
   useEffect(() => {
     if (!assignmentId) return
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setPlayerId(user.id)
-    })
-    fetch(`${MAIN_API}/api/v1/player/assignments/active`, { credentials: "include", cache: "no-store" })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => {
-        if (!d) return
-        const found = (d.assignments ?? []).find((a: AssignmentData) => a.assignment_id === assignmentId)
-        if (found) setData(found)
-        else setError("Assignment not found or not active.")
+    // Get session first — use Bearer token to avoid ISO-8859-1 header issues
+    // that occur when passing raw cookie values across origins
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) { window.location.href = "/login"; return }
+      setPlayerId(session.user.id)
+
+      fetch(`${MAIN_API}/api/v1/player/assignments/active`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        cache:   "no-store",
       })
-      .catch(() => setError("Could not load assignment. Check your connection."))
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          if (!d) return
+          const found = (d.assignments ?? []).find((a: AssignmentData) => a.assignment_id === assignmentId)
+          if (found) setData(found)
+          else setError("Assignment not found or not active.")
+        })
+        .catch(() => setError("Could not load assignment. Check your connection."))
+    })
   }, [assignmentId])
 
   const puzzle = data?.puzzles[idx]

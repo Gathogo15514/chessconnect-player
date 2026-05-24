@@ -5,17 +5,17 @@ import Link                from "next/link"
 const MAIN_API = process.env.NEXT_PUBLIC_MAIN_API_URL ?? ""
 
 type Assignment = {
-  result_id:         string
-  assignment_id:     string
-  player_status:     string
-  title:             string
-  description?:      string | null
-  difficulty?:       string | null
-  due_date?:         string | null
+  result_id:          string
+  assignment_id:      string
+  player_status:      string
+  title:              string
+  description?:       string | null
+  difficulty?:        string | null
+  due_date?:          string | null
   estimated_minutes?: number | null
-  passing_score:     number
-  total_exercises:   number
-  topic?:            { title: string; icon: string } | null
+  passing_score:      number
+  total_exercises:    number
+  topic?:             { title: string; icon: string } | null
 }
 
 const DIFF_COLOR: Record<string, string> = {
@@ -31,9 +31,10 @@ export default async function AssignmentsPage() {
 
   let assignments: Assignment[] = []
   try {
+    // Use Bearer token — safe for cross-origin, no ISO-8859-1 issues
     const res = await fetch(`${MAIN_API}/api/v1/player/assignments/active`, {
-      headers: { Cookie: `sb-access-token=${session.access_token}; sb-refresh-token=${session.refresh_token}` },
-      cache: "no-store",
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      cache:   "no-store",
     })
     if (res.ok) {
       const data = await res.json()
