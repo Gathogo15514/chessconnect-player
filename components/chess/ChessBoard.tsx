@@ -155,7 +155,7 @@ export default function ChessBoard({
   }, [flipped])
 
   // determine whose turn it is from the FEN or move index
-  const playerColor = "w" // player always plays white in these exercises
+  const playerColor: "w" | "b" = "w"
 
   function squareCoords(col: number, row: number): [number, number] {
     return flipped ? [7 - col, 7 - row] : [col, row]
