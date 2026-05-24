@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link                    from "next/link"
 import { useRouter }           from "next/navigation"
 import { createClient }        from "@/lib/supabase/client"
+import { BottomNav }           from "@/components/BottomNav"
 
 const MAIN_API = process.env.NEXT_PUBLIC_MAIN_API_URL ?? ""
 
@@ -68,7 +69,7 @@ export default function AssignmentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-stone-50 pb-20">
       <header className="bg-green-900 text-white px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-2xl">♟</span>
@@ -153,6 +154,8 @@ export default function AssignmentsPage() {
           </>
         )}
       </main>
+
+      <BottomNav />
     </div>
   )
 }

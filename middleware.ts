@@ -29,7 +29,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url))
   }
   if (session && path === "/login") {
-    return NextResponse.redirect(new URL("/assignments", req.url))
+    return NextResponse.redirect(new URL("/dashboard", req.url))
   }
 
   return res

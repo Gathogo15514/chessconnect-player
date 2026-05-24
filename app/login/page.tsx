@@ -23,7 +23,7 @@ export default function LoginPage() {
     // router.refresh() tells Next.js to re-fetch all server data with the new session
     // before navigating — this ensures cookies are readable server-side
     router.refresh()
-    router.push("/assignments")
+    router.push("/dashboard")
   }
 
   return (
