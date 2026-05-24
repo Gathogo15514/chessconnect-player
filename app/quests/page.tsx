@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter }           from "next/navigation"
 import { createClient }        from "@/lib/supabase/client"
 import { BottomNav }           from "@/components/BottomNav"
@@ -15,6 +15,8 @@ type Node = {
   is_locked:        boolean
   unlock_level?:    number | null
   difficulty_rating?: number | null
+  fen_position?:    string | null
+  solution_moves?:  string[] | null
 }
 
 type Completion = { quest_node_id: string; status: string; xp_earned: number; gold_earned: number }
@@ -56,6 +58,251 @@ const NODE_COLOR: Record<string, string> = {
   story:       "bg-stone-100 text-stone-600 border-stone-200",
 }
 
+// ── Minimal chess engine ────────────────────────────────────────────────────
+const FILES = ["a","b","c","d","e","f","g","h"]
+const PIECES: Record<string, string> = {
+  K:"♔",Q:"♕",R:"♖",B:"♗",N:"♘",P:"♙",
+  k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟",
+}
+
+function parseFen(fen: string) {
+  const board: (string|null)[][] = Array.from({length:8}, () => Array(8).fill(null))
+  const rows = fen.split(" ")[0].split("/")
+  rows.forEach((row, r) => {
+    let c = 0
+    for (const ch of row) {
+      if (/\d/.test(ch)) { c += parseInt(ch) }
+      else { board[r][c] = ch; c++ }
+    }
+  })
+  return board
+}
+
+function algToCoord(alg: string): [number,number] {
+  const file = FILES.indexOf(alg[0])
+  const rank = 8 - parseInt(alg[1])
+  return [rank, file]
+}
+
+function PuzzleBoard({ fen, solutionMoves, onSolve }: {
+  fen: string
+  solutionMoves: string[]
+  onSolve: (success: boolean) => void
+}) {
+  const [board,     setBoard]     = useState(() => parseFen(fen))
+  const [selected,  setSelected]  = useState<[number,number]|null>(null)
+  const [moveIdx,   setMoveIdx]   = useState(0)
+  const [feedback,  setFeedback]  = useState<"correct"|"wrong"|"done"|null>(null)
+  const [solved,    setSolved]    = useState(false)
+
+  const applyMove = useCallback((brd: (string|null)[][], from: [number,number], to: [number,number]) => {
+    const next = brd.map(r => [...r])
+    next[to[0]][to[1]] = next[from[0]][from[1]]
+    next[from[0]][from[1]] = null
+    return next
+  }, [])
+
+  function handleSquare(r: number, c: number) {
+    if (solved || feedback === "done") return
+
+    if (selected) {
+      const [sr, sc] = selected
+      if (sr === r && sc === c) { setSelected(null); return }
+
+      const from = `${FILES[sc]}${8-sr}`
+      const to   = `${FILES[c]}${8-r}`
+      const move = `${from}${to}`
+      const expected = solutionMoves[moveIdx]
+
+      if (move === expected) {
+        const newBoard = applyMove(board, selected, [r,c])
+        setBoard(newBoard)
+        setSelected(null)
+
+        const nextIdx = moveIdx + 1
+        if (nextIdx >= solutionMoves.length) {
+          setFeedback("done")
+          setSolved(true)
+          setTimeout(() => onSolve(true), 800)
+        } else {
+          setFeedback("correct")
+          setMoveIdx(nextIdx)
+          setTimeout(() => {
+            setFeedback(null)
+            // play opponent response
+            const oppMove = solutionMoves[nextIdx]
+            if (oppMove) {
+              const oppFrom = algToCoord(oppMove.slice(0,2))
+              const oppTo   = algToCoord(oppMove.slice(2,4))
+              setBoard(prev => applyMove(prev, oppFrom, oppTo))
+              setMoveIdx(nextIdx + 1)
+            }
+          }, 700)
+        }
+      } else {
+        setFeedback("wrong")
+        setSelected(null)
+        setTimeout(() => setFeedback(null), 900)
+      }
+    } else {
+      if (board[r][c]) setSelected([r, c])
+    }
+  }
+
+  const activeColor = fen.split(" ")[1] === "b" ? "black" : "white"
+
+  return (
+    <div className="flex flex-col items-center gap-3">
+      {/* Feedback banner */}
+      {feedback && (
+        <div className={`w-full text-center rounded-xl py-2 text-sm font-bold ${
+          feedback === "correct" ? "bg-emerald-100 text-emerald-700" :
+          feedback === "done"    ? "bg-green-800 text-white" :
+          "bg-red-100 text-red-700"
+        }`}>
+          {feedback === "correct" ? "✓ Correct!" : feedback === "done" ? "🎉 Puzzle solved!" : "✗ Try again"}
+        </div>
+      )}
+
+      {/* Board */}
+      <div className="border-2 border-stone-700 rounded overflow-hidden shadow-lg">
+        {board.map((row, r) => (
+          <div key={r} className="flex">
+            {row.map((piece, c) => {
+              const isLight    = (r + c) % 2 === 0
+              const isSel      = selected?.[0] === r && selected?.[1] === c
+              const isHint     = selected && !feedback &&
+                                  moveIdx < solutionMoves.length &&
+                                  solutionMoves[moveIdx].slice(0,2) === `${FILES[selected[1]]}${8-selected[0]}` &&
+                                  solutionMoves[moveIdx].slice(2,4) === `${FILES[c]}${8-r}`
+              return (
+                <button
+                  key={c}
+                  onClick={() => handleSquare(r,c)}
+                  className={`w-10 h-10 flex items-center justify-center text-xl relative transition-colors ${
+                    isSel   ? "bg-amber-400" :
+                    isLight ? "bg-amber-100" : "bg-green-800"
+                  }`}
+                >
+                  {isHint && (
+                    <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <span className={`w-3 h-3 rounded-full opacity-50 ${piece ? "border-2 border-amber-400" : "bg-amber-400"}`} />
+                    </span>
+                  )}
+                  {piece && (
+                    <span className={`select-none leading-none z-10 ${
+                      piece === piece.toUpperCase() ? "text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.9)]" : "text-stone-900 drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)]"
+                    }`}>
+                      {PIECES[piece] ?? piece}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        ))}
+      </div>
+
+      {/* Coordinates hint */}
+      <p className="text-xs text-stone-400">{activeColor === "white" ? "White" : "Black"} to move · Tap piece then target</p>
+
+      {/* Show solution */}
+      {feedback === "wrong" && (
+        <button
+          onClick={() => {
+            const mv = solutionMoves[moveIdx]
+            if (mv) {
+              const from = algToCoord(mv.slice(0,2))
+              const to   = algToCoord(mv.slice(2,4))
+              setBoard(prev => applyMove(prev, from, to))
+              setMoveIdx(moveIdx + 1)
+              if (moveIdx + 1 >= solutionMoves.length) {
+                setFeedback("done"); setSolved(true); setTimeout(() => onSolve(false), 800)
+              } else setFeedback(null)
+            }
+          }}
+          className="text-xs text-stone-400 underline"
+        >
+          Show next move
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ── Puzzle modal ─────────────────────────────────────────────────────────────
+function PuzzleModal({ node, playerId, onClose }: {
+  node: Node
+  playerId: string
+  onClose: (completed: boolean) => void
+}) {
+  const [result, setResult] = useState<"success"|"fail"|null>(null)
+
+  async function handleSolve(success: boolean) {
+    setResult(success ? "success" : "fail")
+    const supabase = createClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const existing = await (supabase.from("quest_completions") as any)
+      .select("id").eq("player_id", playerId).eq("quest_node_id", node.id).maybeSingle()
+    if (!existing.data) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from("quest_completions") as any).insert({
+        player_id: playerId, quest_node_id: node.id,
+        status: "completed", attempts: 1, hints_used: success ? 0 : 1,
+        xp_earned: success ? node.xp_reward : Math.round(node.xp_reward * 0.5),
+        gold_earned: success ? node.gold_reward : 0,
+        started_at: new Date().toISOString(),
+        completed_at: new Date().toISOString(),
+      })
+    }
+    setTimeout(() => onClose(true), 1400)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center px-4" onClick={() => onClose(false)}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="bg-green-900 px-4 py-3 flex items-center justify-between">
+          <div>
+            <p className="text-white font-bold text-sm">{node.title}</p>
+            <p className="text-green-300 text-xs capitalize">{node.node_type.replace("_"," ")} · +{node.xp_reward} XP · +{node.gold_reward}🪙</p>
+          </div>
+          <button onClick={() => onClose(false)} className="text-green-300 hover:text-white text-xl leading-none">×</button>
+        </div>
+        <div className="p-4">
+          {result ? (
+            <div className={`rounded-xl py-8 text-center ${result === "success" ? "bg-emerald-50" : "bg-amber-50"}`}>
+              <span className="text-5xl">{result === "success" ? "🎉" : "📚"}</span>
+              <p className={`mt-3 font-bold ${result === "success" ? "text-emerald-700" : "text-amber-700"}`}>
+                {result === "success" ? "Brilliant!" : "Good effort!"}
+              </p>
+              <p className="text-xs text-stone-400 mt-1">+{result === "success" ? node.xp_reward : Math.round(node.xp_reward * 0.5)} XP earned</p>
+            </div>
+          ) : node.fen_position && node.solution_moves ? (
+            <PuzzleBoard
+              fen={node.fen_position}
+              solutionMoves={node.solution_moves}
+              onSolve={handleSolve}
+            />
+          ) : (
+            <div className="py-10 text-center">
+              <span className="text-4xl">{NODE_ICON[node.node_type] ?? "⚔️"}</span>
+              <p className="mt-3 text-stone-700 font-medium">{node.title}</p>
+              <p className="text-sm text-stone-400 mt-1">Complete this {node.node_type} to earn {node.xp_reward} XP and {node.gold_reward} 🪙</p>
+              <button
+                onClick={() => handleSolve(true)}
+                className="mt-4 px-5 py-2 bg-green-800 text-white text-sm font-bold rounded-xl hover:bg-green-700"
+              >
+                Mark Complete
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Main page ────────────────────────────────────────────────────────────────
 export default function QuestsPage() {
   const router = useRouter()
   const [assignments, setAssignments] = useState<Assignment[]>([])
@@ -64,56 +311,61 @@ export default function QuestsPage() {
   const [streak,      setStreak]      = useState(0)
   const [srDue,       setSrDue]       = useState(0)
   const [loading,     setLoading]     = useState(true)
+  const [playerId,    setPlayerId]    = useState<string|null>(null)
+  const [activeNode,  setActiveNode]  = useState<Node|null>(null)
+
+  async function loadData(supabase: ReturnType<typeof createClient>, pid: string) {
+    const [gpRes, assignRes, srRes] = await Promise.all([
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase.from("player_game_profiles") as any)
+        .select("current_level, gold_balance, streak_current")
+        .eq("player_id", pid).maybeSingle(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase.from("quest_assignments") as any)
+        .select("id, campaign_id, expires_at, quest_campaigns(id, title, cover_emoji, description, theme, difficulty_from, difficulty_to)")
+        .eq("player_id", pid).eq("status", "active"),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase.from("sr_queue") as any)
+        .select("id").eq("player_id", pid).eq("is_active", true)
+        .lte("due_date", new Date().toISOString().slice(0, 10)),
+    ])
+
+    setLevel(gpRes.data?.current_level ?? 1)
+    setGold(gpRes.data?.gold_balance ?? 0)
+    setStreak(gpRes.data?.streak_current ?? 0)
+    setSrDue((srRes.data ?? []).length)
+
+    const raw = assignRes.data ?? []
+    const enriched: Assignment[] = await Promise.all(raw.map(async (a: {id: string; campaign_id: string; expires_at: string | null; quest_campaigns: Campaign | null}) => {
+      const [nodesRes, compRes] = await Promise.all([
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase.from("quest_nodes") as any)
+          .select("id, title, node_type, position_order, xp_reward, gold_reward, is_locked, unlock_level, difficulty_rating, fen_position, solution_moves")
+          .eq("campaign_id", a.campaign_id).order("position_order"),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase.from("quest_completions") as any)
+          .select("quest_node_id, status, xp_earned, gold_earned")
+          .eq("player_id", pid),
+      ])
+      return { ...a, nodes: nodesRes.data ?? [], completions: compRes.data ?? [] }
+    }))
+
+    setAssignments(enriched)
+  }
 
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) { router.replace("/login"); return }
-
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: player } = await (supabase.from("players") as any)
         .select("id").eq("profile_id", session.user.id).maybeSingle()
-
       if (!player) { setLoading(false); return }
-
-      const [gpRes, assignRes, srRes] = await Promise.all([
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (supabase.from("player_game_profiles") as any)
-          .select("current_level, gold_balance, streak_current")
-          .eq("player_id", player.id).maybeSingle(),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (supabase.from("quest_assignments") as any)
-          .select("id, campaign_id, expires_at, quest_campaigns(id, title, cover_emoji, description, theme, difficulty_from, difficulty_to)")
-          .eq("player_id", player.id).eq("status", "active"),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (supabase.from("sr_queue") as any)
-          .select("id").eq("player_id", player.id).eq("is_active", true)
-          .lte("due_date", new Date().toISOString().slice(0, 10)),
-      ])
-
-      setLevel(gpRes.data?.current_level ?? 1)
-      setGold(gpRes.data?.gold_balance ?? 0)
-      setStreak(gpRes.data?.streak_current ?? 0)
-      setSrDue((srRes.data ?? []).length)
-
-      const raw = assignRes.data ?? []
-      const enriched: Assignment[] = await Promise.all(raw.map(async (a: {id: string; campaign_id: string; expires_at: string | null; quest_campaigns: Campaign | null}) => {
-        const [nodesRes, compRes] = await Promise.all([
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (supabase.from("quest_nodes") as any)
-            .select("id, title, node_type, position_order, xp_reward, gold_reward, is_locked, unlock_level, difficulty_rating")
-            .eq("campaign_id", a.campaign_id).order("position_order"),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (supabase.from("quest_completions") as any)
-            .select("quest_node_id, status, xp_earned, gold_earned")
-            .eq("player_id", player.id),
-        ])
-        return { ...a, nodes: nodesRes.data ?? [], completions: compRes.data ?? [] }
-      }))
-
-      setAssignments(enriched)
+      setPlayerId(player.id)
+      await loadData(supabase, player.id)
       setLoading(false)
     })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router])
 
   async function handleSignOut() {
@@ -122,8 +374,25 @@ export default function QuestsPage() {
     router.replace("/login")
   }
 
+  function handleNodeClick(n: Node, lvl: number) {
+    if (n.is_locked && lvl < (n.unlock_level ?? 0)) return
+    setActiveNode(n)
+  }
+
+  async function handleModalClose(completed: boolean) {
+    setActiveNode(null)
+    if (completed && playerId) {
+      const supabase = createClient()
+      await loadData(supabase, playerId)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-stone-50 pb-20">
+      {activeNode && playerId && (
+        <PuzzleModal node={activeNode} playerId={playerId} onClose={handleModalClose} />
+      )}
+
       <header className="bg-green-900 text-white px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-2xl">♟</span>
@@ -175,12 +444,12 @@ export default function QuestsPage() {
             ) : (
               assignments.map(a => {
                 const c = a.quest_campaigns
-                const completed  = a.completions.filter(c => c.status === "completed").length
+                const completed  = a.completions.filter(x => x.status === "completed").length
                 const total      = a.nodes.length
                 const pct        = total > 0 ? Math.round((completed / total) * 100) : 0
-                const totalXp    = a.completions.reduce((s, c) => s + (c.xp_earned ?? 0), 0)
-                const totalGold  = a.completions.reduce((s, c) => s + (c.gold_earned ?? 0), 0)
-                const compSet    = new Set(a.completions.filter(c => c.status === "completed").map(c => c.quest_node_id))
+                const totalXp    = a.completions.reduce((s, x) => s + (x.xp_earned ?? 0), 0)
+                const totalGold  = a.completions.reduce((s, x) => s + (x.gold_earned ?? 0), 0)
+                const compSet    = new Set(a.completions.filter(x => x.status === "completed").map(x => x.quest_node_id))
 
                 return (
                   <div key={a.id} className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
@@ -215,14 +484,25 @@ export default function QuestsPage() {
                     {/* Nodes */}
                     <div className="divide-y divide-stone-50">
                       {a.nodes.map((n, i) => {
-                        const done     = compSet.has(n.id)
-                        const locked   = n.is_locked && level < (n.unlock_level ?? 0)
+                        const done      = compSet.has(n.id)
+                        const locked    = n.is_locked && level < (n.unlock_level ?? 0)
                         const isCurrent = !done && !locked && i === a.nodes.findIndex(nd => !compSet.has(nd.id) && !(nd.is_locked && level < (nd.unlock_level ?? 0)))
+                        const playable  = !locked && n.node_type !== "story"
                         return (
-                          <div key={n.id} className={`flex items-center gap-3 px-4 py-3 ${isCurrent ? "bg-amber-50" : ""}`}>
+                          <button
+                            key={n.id}
+                            onClick={() => !locked && handleNodeClick(n, level)}
+                            disabled={locked}
+                            className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
+                              isCurrent ? "bg-amber-50 hover:bg-amber-100" :
+                              done      ? "hover:bg-stone-50" :
+                              locked    ? "opacity-50 cursor-not-allowed" :
+                              "hover:bg-stone-50"
+                            }`}
+                          >
                             <div className={`w-9 h-9 rounded-xl border flex items-center justify-center text-sm flex-shrink-0 ${
-                              done ? "bg-emerald-100 border-emerald-200" :
-                              locked ? "bg-stone-100 border-stone-200 opacity-50" :
+                              done    ? "bg-emerald-100 border-emerald-200" :
+                              locked  ? "bg-stone-100 border-stone-200" :
                               isCurrent ? "bg-amber-100 border-amber-300" :
                               NODE_COLOR[n.node_type] ?? "bg-stone-100 border-stone-200"
                             }`}>
@@ -233,15 +513,19 @@ export default function QuestsPage() {
                                 {n.title}
                               </p>
                               <div className="flex items-center gap-2 mt-0.5">
-                                <span className="text-[10px] text-stone-400 capitalize">{n.node_type.replace("_", " ")}</span>
+                                <span className="text-[10px] text-stone-400 capitalize">{n.node_type.replace("_"," ")}</span>
                                 {n.xp_reward > 0 && <span className="text-[10px] text-amber-600">+{n.xp_reward} XP</span>}
                                 {n.gold_reward > 0 && <span className="text-[10px] text-amber-500">+{n.gold_reward}🪙</span>}
+                                {n.fen_position && !done && <span className="text-[10px] text-blue-500">♟ Puzzle</span>}
                               </div>
                             </div>
                             {isCurrent && (
                               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-200 text-amber-800 shrink-0">Next</span>
                             )}
-                          </div>
+                            {playable && !done && !locked && (
+                              <span className="text-stone-300 text-lg shrink-0">›</span>
+                            )}
+                          </button>
                         )
                       })}
                     </div>
