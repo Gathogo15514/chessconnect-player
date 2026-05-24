@@ -10,13 +10,7 @@ type CoachLink = {
   status:     string
   linked_via: string | null
   created_at: string
-  coaches?:   { profiles?: { full_name?: string | null; avatar_url?: string | null } | null } | null
-}
-
-type CoachResult = {
-  id:         string
-  invite_code?: string | null
-  profiles?:  { full_name?: string | null } | null
+  coaches?:   { profiles?: { full_name?: string | null } | null } | null
 }
 
 const LINK_STATUS: Record<string, string> = {
@@ -28,101 +22,77 @@ const LINK_STATUS: Record<string, string> = {
 
 export default function JoinCoachPage() {
   const router = useRouter()
-  const [playerId,    setPlayerId]    = useState<string | null>(null)
-  const [playerName,  setPlayerName]  = useState<string | null>(null)
-  const [links,       setLinks]       = useState<CoachLink[]>([])
-  const [code,        setCode]        = useState("")
-  const [searching,   setSearching]   = useState(false)
-  const [found,       setFound]       = useState<CoachResult | null>(null)
-  const [searchErr,   setSearchErr]   = useState<string | null>(null)
-  const [joining,     setJoining]     = useState(false)
-  const [joinMsg,     setJoinMsg]     = useState<{msg:string; ok:boolean} | null>(null)
-  const [loading,     setLoading]     = useState(true)
+  const [playerId,   setPlayerId]   = useState<string | null>(null)
+  const [links,      setLinks]      = useState<CoachLink[]>([])
+  const [code,       setCode]       = useState("")
+  const [joining,    setJoining]    = useState(false)
+  const [msg,        setMsg]        = useState<{ text: string; ok: boolean } | null>(null)
+  const [loading,    setLoading]    = useState(true)
 
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) { router.replace("/login"); return }
 
-      const [playerRes, profileRes] = await Promise.all([
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (supabase.from("players") as any)
-          .select("id, full_name").eq("profile_id", session.user.id).eq("is_active", true).maybeSingle(),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (supabase.from("profiles") as any)
-          .select("full_name").eq("id", session.user.id).single(),
-      ])
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: pl } = await (supabase.from("players") as any)
+        .select("id").eq("profile_id", session.user.id).eq("is_active", true).maybeSingle()
 
-      const pl = playerRes.data
       if (pl) {
         setPlayerId(pl.id)
-        setPlayerName(pl.full_name ?? profileRes.data?.full_name ?? null)
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: linkData } = await (supabase.from("coach_player_links") as any)
-          .select("id, status, linked_via, created_at, coaches(id, profiles(full_name, avatar_url))")
-          .eq("player_id", pl.id).neq("status", "revoked")
-          .order("created_at", { ascending: false })
-        setLinks(linkData ?? [])
-      } else {
-        setPlayerName(profileRes.data?.full_name ?? null)
+        await refreshLinks(supabase, pl.id)
       }
       setLoading(false)
     })
   }, [router])
 
-  async function handleSearch() {
-    if (!code.trim()) return
-    setSearching(true); setSearchErr(null); setFound(null)
-    const supabase = createClient()
+  async function refreshLinks(supabase: ReturnType<typeof createClient>, pid: string) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase.from("coaches") as any)
-      .select("id, invite_code, profiles(full_name)")
-      .ilike("invite_code", code.trim())
-      .maybeSingle()
-    if (error || !data) {
-      setSearchErr("No coach found with that code. Check the code and try again.")
-    } else {
-      setFound(data)
-    }
-    setSearching(false)
+    const { data } = await (supabase.from("coach_player_links") as any)
+      .select("id, status, linked_via, created_at, coaches(id, profiles(full_name))")
+      .eq("player_id", pid).neq("status", "revoked")
+      .order("created_at", { ascending: false })
+    setLinks(data ?? [])
   }
 
   async function handleJoin() {
-    if (!playerId || !found) return
-    setJoining(true); setJoinMsg(null)
-    const supabase = createClient()
-    // Check already linked
-    const alreadyLinked = links.some(l => {
-      return false // will handle via DB constraint
-    })
-    void alreadyLinked
+    if (!code.trim() || !playerId) return
+    setJoining(true)
+    setMsg(null)
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase.from("coach_player_links") as any)
-      .insert({
-        player_id:  playerId,
-        coach_id:   found.id,
-        status:     "pending",
-        linked_via: "invite_code",
-      })
+    const supabase = createClient()
+    const { data: result, error } = await supabase.rpc("redeem_invite_code", {
+      p_code:      code.trim().toUpperCase(),
+      p_player_id: playerId,
+    })
 
     if (error) {
-      if (error.code === "23505") {
-        setJoinMsg({ msg: "You are already linked to this coach.", ok: false })
-      } else {
-        setJoinMsg({ msg: error.message ?? "Could not send request.", ok: false })
+      setMsg({ ok: false, text: error.message ?? "Something went wrong. Please try again." })
+      setJoining(false)
+      return
+    }
+
+    const res = result as { ok: boolean; reason?: string; status?: string; needs_parent_approval?: boolean }
+
+    if (!res.ok) {
+      const messages: Record<string, string> = {
+        invalid_code:     "This code doesn't exist or has been deactivated. Check the code and try again.",
+        expired:          "This invite code has expired. Ask your coach to generate a new one.",
+        max_uses_reached: "This invite code has reached its maximum uses. Ask your coach for a new code.",
+        already_linked:   "You are already linked to this coach.",
+        player_not_found: "Your player profile could not be found. Contact your admin.",
       }
+      setMsg({ ok: false, text: messages[res.reason ?? ""] ?? "Could not redeem code. Please try again." })
     } else {
-      setJoinMsg({ msg: `Request sent to ${found.profiles?.full_name ?? "coach"}! They will confirm shortly.`, ok: true })
-      setFound(null); setCode("")
-      // Refresh links
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: newLinks } = await (supabase.from("coach_player_links") as any)
-        .select("id, status, linked_via, created_at, coaches(id, profiles(full_name, avatar_url))")
-        .eq("player_id", playerId).neq("status", "revoked")
-        .order("created_at", { ascending: false })
-      setLinks(newLinks ?? [])
+      const needsApproval = res.needs_parent_approval ?? res.status === "pending"
+      setMsg({
+        ok: true,
+        text: needsApproval
+          ? "✅ Request sent! Your parent/guardian needs to approve the connection."
+          : "✅ You are now connected to your coach!",
+      })
+      setCode("")
+      await refreshLinks(supabase, playerId)
     }
     setJoining(false)
   }
@@ -172,7 +142,7 @@ export default function JoinCoachPage() {
                         {l.coaches?.profiles?.full_name ?? "Coach"}
                       </p>
                       <p className="text-xs text-stone-400 mt-0.5">
-                        Linked via {l.linked_via ?? "direct"} · {new Date(l.created_at).toLocaleDateString("en-KE", { day:"numeric", month:"short", year:"numeric" })}
+                        Via {l.linked_via ?? "direct"} · {new Date(l.created_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
                       </p>
                     </div>
                     <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full capitalize ${LINK_STATUS[l.status] ?? "bg-stone-100 text-stone-500"}`}>
@@ -183,61 +153,40 @@ export default function JoinCoachPage() {
               </div>
             )}
 
-            {/* Join by code */}
-            <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-4">
-              <h2 className="font-bold text-stone-800 mb-1">Join a Coach</h2>
-              <p className="text-xs text-stone-400 mb-3">Ask your coach for their invite code, then enter it below.</p>
-
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={code}
-                  onChange={e => setCode(e.target.value.toUpperCase())}
-                  onKeyDown={e => { if (e.key === "Enter") handleSearch() }}
-                  placeholder="COACH-XXXX"
-                  className="flex-1 rounded-xl border border-stone-200 px-3 py-2 text-sm font-mono outline-none focus:ring-2 focus:ring-green-700 uppercase"
-                  maxLength={20}
-                />
-                <button
-                  onClick={handleSearch}
-                  disabled={searching || !code.trim()}
-                  className="px-4 py-2 bg-green-800 text-white text-sm font-semibold rounded-xl hover:bg-green-700 disabled:opacity-40 transition-colors"
-                >
-                  {searching ? "…" : "Search"}
-                </button>
+            {/* Join by invite code */}
+            <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-4 space-y-3">
+              <div>
+                <h2 className="font-bold text-stone-800">Enter Invite Code</h2>
+                <p className="text-xs text-stone-400 mt-0.5">Ask your coach for their invite code — it looks like GUILD-KNIGHT-402.</p>
               </div>
 
-              {searchErr && <p className="text-xs text-red-600 mt-2">{searchErr}</p>}
+              <input
+                type="text"
+                value={code}
+                onChange={e => setCode(e.target.value.toUpperCase())}
+                onKeyDown={e => { if (e.key === "Enter") handleJoin() }}
+                placeholder="GUILD-KNIGHT-402"
+                className="w-full rounded-xl border border-stone-200 px-3 py-2.5 text-sm font-mono outline-none focus:ring-2 focus:ring-green-700 uppercase tracking-widest"
+                maxLength={24}
+                disabled={joining}
+              />
 
-              {/* Found coach */}
-              {found && (
-                <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-lg flex-shrink-0">
-                    👨‍🏫
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-emerald-800">{found.profiles?.full_name ?? "Coach"}</p>
-                    <p className="text-xs text-emerald-600">Code: {found.invite_code}</p>
-                  </div>
-                  <button
-                    onClick={handleJoin}
-                    disabled={joining}
-                    className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-500 disabled:opacity-50 transition-colors"
-                  >
-                    {joining ? "…" : "Request to Join"}
-                  </button>
-                </div>
-              )}
+              <button
+                onClick={handleJoin}
+                disabled={joining || !code.trim()}
+                className="w-full py-2.5 bg-green-800 text-white text-sm font-bold rounded-xl hover:bg-green-700 disabled:opacity-40 transition-colors"
+              >
+                {joining ? "Connecting…" : "Join Coach"}
+              </button>
 
-              {joinMsg && (
-                <div className={`mt-3 px-4 py-2.5 rounded-xl text-sm font-medium ${joinMsg.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
-                  {joinMsg.msg}
+              {msg && (
+                <div className={`px-4 py-3 rounded-xl text-sm font-medium ${msg.ok ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+                  {msg.text}
                 </div>
               )}
             </div>
 
-            {/* Empty state */}
-            {links.length === 0 && !found && (
+            {links.length === 0 && (
               <div className="bg-stone-50 rounded-2xl border border-dashed border-stone-300 p-8 text-center">
                 <span className="text-4xl">👨‍🏫</span>
                 <p className="mt-3 text-stone-500 text-sm font-medium">No coaches yet</p>
