@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react"
 import { BOARD_THEMES, PIECE_SETS, PIECE_UNICODE, FILES, ThemeId, PieceSetId } from "./themes"
+import { playMoveSound, playCaptureSound, playSolveSound } from "@/lib/chess-sounds"
 
 const SQUARE_SIZE = 44
 const BOARD_PX = SQUARE_SIZE * 8
@@ -16,6 +17,8 @@ type Props = {
   onCaptureSuccess?: () => void
   onNodeCleared?: () => void
   flipped?: boolean
+  freePlay?: boolean
+  onFreeMove?: (move: { from: string; to: string; promotion?: string }) => void
 }
 
 type Particle = {
@@ -92,6 +95,8 @@ export default function ChessBoard({
   onCaptureSuccess,
   onNodeCleared,
   flipped = false,
+  freePlay = false,
+  onFreeMove,
 }: Props) {
   const theme    = BOARD_THEMES[themeId]
   const pieceSet = PIECE_SETS[pieceSetId]
@@ -154,8 +159,9 @@ export default function ChessBoard({
     particles.current.push(...spawnBurst(cx, cy, color))
   }, [flipped])
 
-  // determine whose turn it is from the FEN or move index
-  const playerColor: "w" | "b" = "w"
+  // whose turn it is: in freePlay, read from FEN; in puzzle mode always white
+  const fenTurn   = fen.split(" ")[1] as "w" | "b"
+  const playerColor: "w" | "b" = freePlay ? fenTurn : "w"
 
   function squareCoords(col: number, row: number): [number, number] {
     return flipped ? [7 - col, 7 - row] : [col, row]
@@ -177,8 +183,28 @@ export default function ChessBoard({
       const [sc, sr] = selected
       if (sc === col && sr === row) { setSelected(null); return }
 
-      const expected = solutionMoves[moveIdx]
       const attempted = `${FILES[sc]}${8 - sr}${FILES[col]}${8 - row}`
+
+      // ── Free play mode ────────────────────────────────────────────────────────
+      if (freePlay) {
+        const isCapture = board[row][col] !== null
+        const nextBoard = applyMove(board, attempted)
+        setBoard(nextBoard)
+        setLastMove(attempted)
+        setSelected(null)
+        if (isCapture) {
+          burst(col, row, pieceSet.burstColor)
+          playCaptureSound(themeId)
+        } else {
+          burst(col, row, theme.hintColor)
+          playMoveSound(themeId)
+        }
+        onFreeMove?.({ from: attempted.slice(0, 2), to: attempted.slice(2, 4) })
+        return
+      }
+
+      // ── Puzzle mode ───────────────────────────────────────────────────────────
+      const expected = solutionMoves[moveIdx]
 
       if (!expected || attempted !== expected) {
         setMsg("⚠️ Path Blocked! Try another vector!")
@@ -197,9 +223,11 @@ export default function ChessBoard({
 
       if (isCapture) {
         burst(col, row, pieceSet.burstColor)
+        playCaptureSound(themeId)
         onCaptureSuccess?.()
       } else {
         burst(col, row, theme.hintColor)
+        playMoveSound(themeId)
       }
 
       onMove?.(attempted)
@@ -208,6 +236,7 @@ export default function ChessBoard({
       if (nextIdx >= solutionMoves.length) {
         setSolved(true)
         setMsg("🎉 Puzzle Cleared! Excellent tactics!")
+        playSolveSound(themeId)
         onSolve?.()
         onNodeCleared?.()
         return
@@ -224,10 +253,16 @@ export default function ChessBoard({
           setBoard(oppBoard)
           setLastMove(oppMove)
           setMoveIdx(nextIdx + 1)
-          if (oppCapture) burst(oppTc, oppTr, "#ff4444")
+          if (oppCapture) {
+            burst(oppTc, oppTr, "#ff4444")
+            playCaptureSound(themeId)
+          } else {
+            playMoveSound(themeId)
+          }
           if (nextIdx + 1 >= solutionMoves.length) {
             setSolved(true)
             setMsg("🎉 Puzzle Cleared! Excellent tactics!")
+            playSolveSound(themeId)
             onSolve?.()
             onNodeCleared?.()
           }
@@ -394,7 +429,7 @@ export default function ChessBoard({
       )}
 
       {/* controls */}
-      {!solved && (
+      {!solved && !freePlay && (
         <button
           onClick={showHint}
           style={{

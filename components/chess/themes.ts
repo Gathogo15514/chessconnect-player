@@ -1,4 +1,4 @@
-export type ThemeId    = "classic" | "cyberpunk_neon" | "enchanted_wood" | "obsidian"
+export type ThemeId    = "classic" | "cyberpunk_neon" | "enchanted_wood" | "obsidian" | "volcano_forge"
 export type PieceSetId = "standard" | "robo_mechs" | "elemental_beasts" | "chibi_anime"
 
 export type BoardTheme = {
@@ -50,6 +50,13 @@ export const BOARD_THEMES: Record<ThemeId, BoardTheme> = {
     lightSquare: "#3d3d3d", darkSquare: "#1a1a1a",
     border: "#555", selectedSquare: "#7b4f9ecc",
     lastMoveSquare: "#5a3d7ecc", hintColor: "#9b6fbe",
+  },
+  volcano_forge: {
+    id: "volcano_forge", displayName: "Volcano Forge", emoji: "🌋",
+    lightSquare: "#4a1a0a", darkSquare: "#1a0800",
+    border: "#ff4500", glow: "0 0 24px #ff450055",
+    selectedSquare: "rgba(255,140,0,0.55)", lastMoveSquare: "rgba(255,69,0,0.4)",
+    hintColor: "#ff6a00",
   },
 }
 

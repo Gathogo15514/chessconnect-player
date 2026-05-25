@@ -13,6 +13,9 @@ export default function AuthExchangePage() {
     const access_token  = params.get("access_token")
     const refresh_token = params.get("refresh_token")
 
+    // Clear the fragment immediately so tokens aren't exposed in browser history
+    history.replaceState(null, "", window.location.pathname + window.location.search)
+
     if (!access_token || !refresh_token) {
       setMsg("Invalid or missing session tokens. Please log in.")
       setStatus("error")

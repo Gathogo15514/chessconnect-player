@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter }           from "next/navigation"
 import { createClient }        from "@/lib/supabase/client"
 import { BottomNav }           from "@/components/BottomNav"
+import { fmtDate, fmtWeekday } from "@/lib/dates"
 
 type AttendanceRecord = {
   status:    string
@@ -112,9 +113,7 @@ export default function SessionsPage() {
                       </p>
                       <p className="text-xs text-stone-400 mt-0.5">
                         {a.sessions?.session_date
-                          ? new Date(a.sessions.session_date).toLocaleDateString("en-KE", {
-                              weekday:"short", day:"numeric", month:"short", year:"numeric"
-                            })
+                          ? `${fmtWeekday(a.sessions.session_date)}, ${fmtDate(a.sessions.session_date)}`
                           : "—"}
                         {a.sessions?.start_time ? ` · ${a.sessions.start_time.slice(0, 5)}` : ""}
                         {a.sessions?.coaches?.profiles?.full_name

@@ -21,15 +21,34 @@ export async function middleware(req: NextRequest) {
     }
   )
 
-  // getSession reads the JWT from the cookie locally — no network call
   const { data: { session } } = await supabase.auth.getSession()
   const path = req.nextUrl.pathname
 
   if (!session && !path.startsWith("/login") && !path.startsWith("/auth")) {
     return NextResponse.redirect(new URL("/login", req.url))
   }
-  if (session && path === "/login") {
-    return NextResponse.redirect(new URL("/dashboard", req.url))
+
+  if (session) {
+    if (path === "/login") {
+      return NextResponse.redirect(new URL("/dashboard", req.url))
+    }
+
+    // M-2: Block non-player roles from accessing this portal entirely.
+    // Coaches, admins etc. who somehow have a player profile must not get
+    // student-portal access under their privileged identity.
+    if (!path.startsWith("/login") && !path.startsWith("/auth")) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role_name")
+        .eq("id", session.user.id)
+        .single()
+
+      if (profile && profile.role_name !== "player") {
+        const url = new URL("/login", req.url)
+        url.searchParams.set("error", "wrong_portal")
+        return NextResponse.redirect(url)
+      }
+    }
   }
 
   return res

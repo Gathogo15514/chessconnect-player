@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter }           from "next/navigation"
 import { createClient }        from "@/lib/supabase/client"
 import { BottomNav }           from "@/components/BottomNav"
+import { fmtDateShort, fmtWeekday } from "@/lib/dates"
 
 type Player = {
   id: string
@@ -47,14 +48,18 @@ const STATUS_BG: Record<string, string> = {
 }
 
 const QUICK_LINKS = [
-  { href: "/quests",      label: "Quest Map",   icon: "⚔️" },
-  { href: "/join-coach",  label: "Join a Coach",icon: "👨‍🏫" },
-  { href: "/progress",    label: "XP & Level",  icon: "📊" },
-  { href: "/gold-shop",   label: "Gold Shop",   icon: "🪙" },
-  { href: "/performance", label: "Performance", icon: "⚡" },
-  { href: "/sessions",    label: "Sessions",    icon: "📅" },
-  { href: "/tournaments", label: "Tournaments", icon: "🏆" },
-  { href: "/medical",     label: "Medical",     icon: "🏥" },
+  { href: "/quests",       label: "Quest Map",    icon: "⚔️" },
+  { href: "/puzzle-rush",  label: "Puzzle Rush",  icon: "⚡" },
+  { href: "/duel",         label: "Friendly Duel",icon: "🤺" },
+  { href: "/encounters",   label: "Boss Returns", icon: "👹" },
+  { href: "/guild",        label: "Guild",        icon: "🏰" },
+  { href: "/join-coach",   label: "Join a Coach", icon: "👨‍🏫" },
+  { href: "/progress",     label: "XP & Level",   icon: "📊" },
+  { href: "/gold-shop",    label: "The Armory",   icon: "🗡️" },
+  { href: "/performance",  label: "Performance",  icon: "📈" },
+  { href: "/sessions",     label: "Sessions",     icon: "📅" },
+  { href: "/tournaments",  label: "Tournaments",  icon: "🏆" },
+  { href: "/medical",      label: "Medical",      icon: "🏥" },
 ]
 
 export default function DashboardPage() {
@@ -87,6 +92,9 @@ export default function DashboardPage() {
       setPlayer(pl)
 
       if (!pl) { setLoading(false); return }
+
+      // Update daily streak (idempotent — DB checks if already called today)
+      supabase.rpc("update_player_streak", { p_player_id: pl.id }).then(() => {})
 
       const todayStr = new Date().toISOString().slice(0, 10)
       const in4w     = new Date(Date.now() + 28 * 86400000).toISOString().slice(0, 10)
@@ -141,12 +149,13 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-stone-50 pb-20">
-      <header className="bg-green-900 text-white px-4 py-3 flex items-center justify-between">
+      <header style={{ background: "#0f172a", borderBottom: "1px solid rgba(16,185,129,0.15)" }}
+        className="text-white px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-2xl">♟</span>
-          <span className="font-bold text-lg">ChessConnect</span>
+          <span className="font-bold text-lg" style={{ color: "#10b981" }}>ChessConnect</span>
         </div>
-        <button onClick={handleSignOut} className="text-sm text-green-200 hover:text-white">Sign out</button>
+        <button onClick={handleSignOut} className="text-sm hover:text-white" style={{ color: "rgba(16,185,129,0.5)" }}>Sign out</button>
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-6 space-y-5">
@@ -196,11 +205,12 @@ export default function DashboardPage() {
 
             {/* Streak banner */}
             {gp && gp.streak_current > 0 && (
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 flex items-center gap-3">
+              <div style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.04))", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 16 }}
+                className="px-4 py-3 flex items-center gap-3">
                 <span className="text-2xl">🔥</span>
                 <div>
-                  <p className="text-amber-800 font-bold text-sm">{gp.streak_current}-day streak!</p>
-                  <p className="text-amber-600 text-xs">{gp.total_xp.toLocaleString()} XP total · Keep it going!</p>
+                  <p className="font-bold text-sm" style={{ color: "#f59e0b" }}>{gp.streak_current}-day streak!</p>
+                  <p className="text-xs" style={{ color: "rgba(245,158,11,0.7)" }}>{gp.total_xp.toLocaleString()} XP total · Keep it going!</p>
                 </div>
               </div>
             )}
@@ -218,7 +228,7 @@ export default function DashboardPage() {
                   <div key={s.id} className={`flex items-center gap-3 px-4 py-3 ${i < sessions.length - 1 ? "border-b border-stone-50" : ""}`}>
                     <div className={`w-10 h-10 rounded-xl flex flex-col items-center justify-center flex-shrink-0 ${s.status === "in_progress" ? "bg-green-900" : "bg-stone-100"}`}>
                       <span className={`text-[8px] font-bold uppercase ${s.status === "in_progress" ? "text-amber-400" : "text-stone-400"}`}>
-                        {new Date(s.session_date).toLocaleDateString("en-KE", { weekday:"short" }).slice(0,3)}
+                        {fmtWeekday(s.session_date)}
                       </span>
                       <span className={`text-base font-bold leading-none ${s.status === "in_progress" ? "text-white" : "text-stone-700"}`}>
                         {new Date(s.session_date).getDate()}
@@ -252,9 +262,7 @@ export default function DashboardPage() {
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-stone-800 truncate">{a.sessions?.title ?? "Session"}</p>
                       <p className="text-xs text-stone-400">
-                        {a.sessions?.session_date
-                          ? new Date(a.sessions.session_date).toLocaleDateString("en-KE", { day:"numeric", month:"short" })
-                          : "—"}
+                        {fmtDateShort(a.sessions?.session_date)}
                       </p>
                     </div>
                     <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full capitalize ${STATUS_BG[a.status] ?? "bg-stone-100 text-stone-500"}`}>

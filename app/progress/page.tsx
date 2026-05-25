@@ -215,7 +215,7 @@ export default function ProgressPage() {
                         )}
                         {q.expires_at && (
                           <p className="text-[10px] text-amber-600 mt-0.5">
-                            Expires {new Date(q.expires_at).toLocaleDateString("en-KE", { day:"numeric", month:"short" })}
+                            Expires {new Date(q.expires_at).toLocaleDateString("en-GB", { day:"numeric", month:"short" })}
                           </p>
                         )}
                       </div>
@@ -238,7 +238,7 @@ export default function ProgressPage() {
                       <p className="text-sm font-medium text-stone-800">{XP_LABEL[e.event_type] ?? e.event_type}</p>
                       {e.notes && <p className="text-xs text-stone-400 mt-0.5 truncate">{e.notes}</p>}
                       <p className="text-[10px] text-stone-400">
-                        {new Date(e.created_at).toLocaleDateString("en-KE", { day:"numeric", month:"short" })}
+                        {new Date(e.created_at).toLocaleDateString("en-GB", { day:"numeric", month:"short" })}
                       </p>
                     </div>
                     <span className="text-sm font-bold text-amber-600 shrink-0">+{e.xp_awarded} XP</span>

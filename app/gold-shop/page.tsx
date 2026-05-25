@@ -127,41 +127,51 @@ export default function GoldShopPage() {
   const ownedIds = new Set(purchases.map(p => p.item_id))
 
   return (
-    <div className="min-h-screen bg-stone-50 pb-20">
-      <header className="bg-green-900 text-white px-4 py-3 flex items-center justify-between">
+    <div className="min-h-screen pb-20" style={{ background: "#0f172a" }}>
+      <header style={{ background: "linear-gradient(135deg, #0f172a, #1a0d2e)", borderBottom: "1px solid rgba(245,158,11,0.2)" }}
+        className="text-white px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-2xl">♟</span>
-          <span className="font-bold text-lg">Gold Shop</span>
+          <span className="text-2xl">⚔️</span>
+          <div>
+            <p className="font-bold text-base" style={{ color: "#f59e0b" }}>The Armory</p>
+            <p className="text-xs" style={{ color: "rgba(245,158,11,0.5)" }}>Gold Shop</p>
+          </div>
         </div>
-        <button onClick={handleSignOut} className="text-sm text-green-200 hover:text-white">Sign out</button>
+        <button onClick={handleSignOut} className="text-sm hover:text-white" style={{ color: "rgba(245,158,11,0.5)" }}>Sign out</button>
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-6 space-y-5">
         {loading ? (
           <div className="flex justify-center py-24">
-            <div className="w-8 h-8 border-4 border-green-800 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#f59e0b", borderTopColor: "transparent" }} />
           </div>
         ) : (
           <>
             {/* Gold balance */}
-            <div className="bg-green-900 rounded-2xl p-4 flex items-center gap-4">
+            <div style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05))", border: "1px solid rgba(245,158,11,0.3)", borderRadius: 20 }}
+              className="p-4 flex items-center gap-4">
               <span className="text-4xl">🪙</span>
               <div>
-                <p className="text-amber-400 text-2xl font-bold">{(gp?.gold_balance ?? 0).toLocaleString()}</p>
-                <p className="text-green-300 text-xs">Gold balance</p>
+                <p className="text-2xl font-bold" style={{ color: "#f59e0b" }}>{(gp?.gold_balance ?? 0).toLocaleString()}</p>
+                <p className="text-xs" style={{ color: "rgba(245,158,11,0.6)" }}>Gold balance</p>
               </div>
               <div className="ml-auto text-right">
-                <p className="text-white font-bold">{gp?.streak_shields ?? 0}</p>
-                <p className="text-green-300 text-xs">🛡 Shields</p>
+                <p className="font-bold text-white">{gp?.streak_shields ?? 0}</p>
+                <p className="text-xs" style={{ color: "rgba(245,158,11,0.6)" }}>🛡 Shields</p>
               </div>
             </div>
 
             {/* Tabs */}
-            <div className="flex bg-stone-100 rounded-xl p-1">
+            <div className="flex rounded-xl p-1" style={{ background: "rgba(255,255,255,0.05)" }}>
               {(["shop","history"] as const).map(t => (
                 <button key={t} onClick={() => setTab(t)}
-                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors capitalize ${tab === t ? "bg-white text-stone-900 shadow-sm" : "text-stone-500"}`}>
-                  {t === "shop" ? "🛒 Shop" : "📋 History"}
+                  className="flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors"
+                  style={{
+                    background: tab === t ? "rgba(245,158,11,0.15)" : "transparent",
+                    color: tab === t ? "#f59e0b" : "rgba(255,255,255,0.35)",
+                    border: tab === t ? "1px solid rgba(245,158,11,0.3)" : "1px solid transparent",
+                  }}>
+                  {t === "shop" ? "⚔️ Armory" : "📋 History"}
                 </button>
               ))}
             </div>
@@ -233,7 +243,7 @@ export default function GoldShopPage() {
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-stone-800 truncate">{tx.description ?? tx.transaction_type}</p>
                         <p className="text-xs text-stone-400">
-                          {new Date(tx.created_at).toLocaleDateString("en-KE", { day:"numeric", month:"short", year:"numeric" })}
+                          {new Date(tx.created_at).toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" })}
                         </p>
                       </div>
                       <div className="text-right shrink-0 ml-3">

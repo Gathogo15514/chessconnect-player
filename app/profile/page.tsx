@@ -6,6 +6,8 @@ import { createClient }        from "@/lib/supabase/client"
 import { BottomNav }           from "@/components/BottomNav"
 import { BOARD_THEMES, PIECE_SETS } from "@/components/chess/themes"
 import type { ThemeId, PieceSetId } from "@/components/chess/themes"
+import { AVATARS, getAvatar } from "@/lib/avatars"
+import type { AvatarId } from "@/lib/avatars"
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -27,6 +29,8 @@ export default function ProfilePage() {
   const [fideTitle,       setFideTitle]       = useState<string | null>(null)
   const [boardTheme,      setBoardTheme]      = useState<ThemeId>("classic")
   const [pieceSet,        setPieceSet]        = useState<PieceSetId>("standard")
+  const [boardFlipped,    setBoardFlipped]    = useState(false)
+  const [avatarId,        setAvatarId]        = useState<AvatarId>("pawn_hero")
 
   useEffect(() => {
     async function load() {
@@ -49,9 +53,11 @@ export default function ProfilePage() {
       if (playerRes.data?.id) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: gp } = await (supabase.from("player_game_profiles") as any)
-          .select("board_theme, piece_set").eq("player_id", playerRes.data.id).maybeSingle()
+          .select("board_theme, piece_set, board_flipped, avatar_id").eq("player_id", playerRes.data.id).maybeSingle()
         if (gp?.board_theme) setBoardTheme(gp.board_theme as ThemeId)
         if (gp?.piece_set)   setPieceSet(gp.piece_set as PieceSetId)
+        if (typeof gp?.board_flipped === "boolean") setBoardFlipped(gp.board_flipped)
+        if (gp?.avatar_id)   setAvatarId(gp.avatar_id as AvatarId)
       }
 
       setFullName(profileRes.data?.full_name ?? "")
@@ -103,10 +109,26 @@ export default function ProfilePage() {
       if (playerErr) errors.push(playerErr.message)
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: gpErr } = await (supabase.from("player_game_profiles") as any)
-        .update({ board_theme: boardTheme, piece_set: pieceSet })
-        .eq("player_id", playerId)
-      if (gpErr) errors.push(gpErr.message)
+      const { data: gpExists } = await (supabase.from("player_game_profiles") as any)
+        .select("player_id").eq("player_id", playerId).maybeSingle()
+      if (gpExists) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: gpErr } = await (supabase.from("player_game_profiles") as any)
+          .update({ board_theme: boardTheme, piece_set: pieceSet, board_flipped: boardFlipped, avatar_id: avatarId })
+          .eq("player_id", playerId)
+        if (gpErr) errors.push(gpErr.message)
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: gpErr } = await (supabase.from("player_game_profiles") as any)
+          .insert({
+            player_id: playerId, board_theme: boardTheme, piece_set: pieceSet,
+            board_flipped: boardFlipped, avatar_id: avatarId,
+            current_level: 1, total_xp: 0,
+            gold_balance: 0, streak_current: 0, streak_shields: 0,
+            level_xp_start: 0, level_xp_threshold: 100,
+          })
+        if (gpErr) errors.push(gpErr.message)
+      }
     }
 
     setSaveMsg(errors.length ? `Error: ${errors.join("; ")}` : "Saved successfully!")
@@ -232,6 +254,51 @@ export default function ProfilePage() {
                 </div>
               </div>
 
+              {/* Avatar / Character picker */}
+              <div style={{ background: "#0f172a", borderRadius: 16, padding: 16, border: "1px solid rgba(16,185,129,0.15)" }}>
+                <h2 className="font-bold text-sm mb-3" style={{ color: "#10b981" }}>⚔️ Your Character</h2>
+                <div className="grid grid-cols-2 gap-2">
+                  {AVATARS.map(av => {
+                    const selected = avatarId === av.id
+                    const locked   = false // level check optional — kept open for all for now
+                    return (
+                      <button
+                        key={av.id} type="button"
+                        onClick={() => !locked && setAvatarId(av.id)}
+                        style={{
+                          borderRadius: 12, padding: "10px 12px",
+                          background:  selected ? `rgba(${av.glow ? "16,185,129" : "255,255,255"},0.08)` : "rgba(255,255,255,0.04)",
+                          border:      `2px solid ${selected ? av.color : "rgba(255,255,255,0.08)"}`,
+                          boxShadow:   selected ? `0 0 12px ${av.glow}` : "none",
+                          cursor:      "pointer", textAlign: "left", transition: "all 0.15s",
+                        }}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <span style={{ fontSize: 22 }}>{av.emoji}</span>
+                          <div>
+                            <p style={{ fontSize: 12, fontWeight: 700, color: selected ? av.color : "#e2e8f0", lineHeight: 1.2 }}>{av.name}</p>
+                            <p style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>{av.class}</p>
+                          </div>
+                        </div>
+                        <p style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", lineHeight: 1.3 }}>{av.description}</p>
+                        {av.unlockLevel > 1 && (
+                          <p style={{ fontSize: 9, color: av.color, marginTop: 4, opacity: 0.7 }}>Lv. {av.unlockLevel}+</p>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+                {(() => { const av = getAvatar(avatarId); return (
+                  <div style={{ marginTop: 12, padding: "10px 14px", background: "rgba(255,255,255,0.04)", borderRadius: 10, display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontSize: 28 }}>{av.emoji}</span>
+                    <div>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: av.color }}>{av.name}</p>
+                      <p style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{av.class} · {av.description}</p>
+                    </div>
+                  </div>
+                )})()}
+              </div>
+
               {/* Board theme picker */}
               <div className="bg-white rounded-2xl border border-stone-200 p-4 space-y-4 shadow-sm">
                 <h2 className="font-bold text-stone-800 text-sm">Board Theme</h2>
@@ -283,6 +350,31 @@ export default function ProfilePage() {
                         <p className="text-xs font-semibold text-stone-800 leading-tight truncate">{ps.displayName}</p>
                         <p className="text-[10px] text-stone-400">{ps.emoji}</p>
                       </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Board orientation */}
+              <div className="bg-white rounded-2xl border border-stone-200 p-4 shadow-sm">
+                <h2 className="font-bold text-stone-800 text-sm mb-3">Default Board Orientation</h2>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: "Play as White", sub: "Pawns move up ↑", value: false },
+                    { label: "Play as Black", sub: "Pawns move down ↓", value: true  },
+                  ].map(opt => (
+                    <button
+                      key={String(opt.value)}
+                      type="button"
+                      onClick={() => setBoardFlipped(opt.value)}
+                      className={`rounded-xl border-2 p-3 text-left transition-all ${
+                        boardFlipped === opt.value
+                          ? "border-green-700 bg-green-50"
+                          : "border-stone-200 hover:border-stone-300"
+                      }`}
+                    >
+                      <p className="text-xs font-semibold text-stone-800">{opt.label}</p>
+                      <p className="text-[10px] text-stone-400 mt-0.5">{opt.sub}</p>
                     </button>
                   ))}
                 </div>

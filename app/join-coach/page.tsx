@@ -142,7 +142,7 @@ export default function JoinCoachPage() {
                         {l.coaches?.profiles?.full_name ?? "Coach"}
                       </p>
                       <p className="text-xs text-stone-400 mt-0.5">
-                        Via {l.linked_via ?? "direct"} · {new Date(l.created_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                        Via {l.linked_via ?? "direct"} · {new Date(l.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                       </p>
                     </div>
                     <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full capitalize ${LINK_STATUS[l.status] ?? "bg-stone-100 text-stone-500"}`}>

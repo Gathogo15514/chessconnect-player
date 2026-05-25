@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter }           from "next/navigation"
 import { createClient }        from "@/lib/supabase/client"
 import { BottomNav }           from "@/components/BottomNav"
+import { fmtDate }             from "@/lib/dates"
 
 type Tournament = {
   id:               string
@@ -170,7 +171,7 @@ export default function TournamentsPage() {
                       </div>
 
                       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-stone-500">
-                        <span>📅 {new Date(t.start_date).toLocaleDateString("en-KE", { day:"numeric", month:"short", year:"numeric" })}</span>
+                        <span>📅 {fmtDate(t.start_date)}</span>
                         {t.venue_name && <span>📍 {t.venue_name}</span>}
                         {t.counties?.name && <span>🗺 {t.counties.name}</span>}
                         {t.format && <span>⏱ {t.format}</span>}
