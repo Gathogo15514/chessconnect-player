@@ -34,7 +34,7 @@ export default function PuzzleRushPage() {
   const [playerId,    setPlayerId]    = useState<string | null>(null)
   const [themeId,     setThemeId]     = useState<ThemeId>("classic")
   const [pieceSetId,  setPieceSetId]  = useState<PieceSetId>("standard")
-  const [flipped,     setFlipped]     = useState(false)
+  // flipped is auto-derived from puzzle FEN (black-to-move puzzles flip the board)
   const [comboAnim,   setComboAnim]   = useState(false)
 
   const timerRef    = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -54,7 +54,7 @@ export default function PuzzleRushPage() {
         .select("board_theme, piece_set, board_flipped").eq("player_id", player.id).maybeSingle()
       if (gp?.board_theme) setThemeId(gp.board_theme as ThemeId)
       if (gp?.piece_set)   setPieceSetId(gp.piece_set as PieceSetId)
-      if (typeof gp?.board_flipped === "boolean") setFlipped(gp.board_flipped)
+      // board_flipped preference not used here — board auto-flips based on puzzle FEN
     })
   }, [router])
 
@@ -275,7 +275,7 @@ export default function PuzzleRushPage() {
                     solutionMoves={puzzle.solution_moves}
                     themeId={themeId}
                     pieceSetId={pieceSetId}
-                    flipped={flipped}
+                    flipped={puzzle.fen_position.split(" ")[1] === "b"}
                     onSolve={handleSolve}
                     onCaptureSuccess={() => {}}
                     onNodeCleared={() => {}}

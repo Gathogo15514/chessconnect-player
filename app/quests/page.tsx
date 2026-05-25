@@ -97,12 +97,11 @@ function EmojiReactions({ onSend }: { onSend: (e: string) => void }) {
 type FloatingEmoji = { id: number; emoji: string; x: number }
 
 // ── Puzzle modal ──────────────────────────────────────────────────────────────
-function PuzzleModal({ node, playerId, themeId, pieceSetId, flipped, onClose }: {
+function PuzzleModal({ node, playerId, themeId, pieceSetId, onClose }: {
   node:       Node
   playerId:   string
   themeId:    ThemeId
   pieceSetId: PieceSetId
-  flipped:    boolean
   onClose:    (completed: boolean) => void
 }) {
   const [result,  setResult]  = useState<"success" | null>(null)
@@ -249,7 +248,7 @@ function PuzzleModal({ node, playerId, themeId, pieceSetId, flipped, onClose }: 
                 fen={node.fen_position}
                 solutionMoves={node.solution_moves}
                 themeId={themeId} pieceSetId={pieceSetId}
-                flipped={flipped}
+                flipped={node.fen_position.split(" ")[1] === "b"}
                 onSolve={handleSolve}
                 onCaptureSuccess={() => {}} onNodeCleared={() => {}}
               />
@@ -443,7 +442,7 @@ export default function QuestsPage() {
   const [activeNode,  setActiveNode]  = useState<Node | null>(null)
   const [themeId,     setThemeId]     = useState<ThemeId>("classic")
   const [pieceSetId,  setPieceSetId]  = useState<PieceSetId>("standard")
-  const [boardFlipped,setBoardFlipped]= useState(false)
+  // boardFlipped removed — puzzles auto-flip based on FEN turn
   const [allCompSet,  setAllCompSet]  = useState<Set<string>>(new Set())
 
   async function loadData(supabase: ReturnType<typeof createClient>, pid: string) {
@@ -468,7 +467,7 @@ export default function QuestsPage() {
     setSrDue((srRes.data ?? []).length)
     if (gpRes.data?.board_theme) setThemeId(gpRes.data.board_theme as ThemeId)
     if (gpRes.data?.piece_set)   setPieceSetId(gpRes.data.piece_set as PieceSetId)
-    if (typeof gpRes.data?.board_flipped === "boolean") setBoardFlipped(gpRes.data.board_flipped)
+    // board_flipped preference removed — puzzles auto-flip based on FEN turn
 
     const raw = assignRes.data ?? []
     const enriched: Assignment[] = await Promise.all(raw.map(async (a: { id: string; campaign_id: string; expires_at: string | null; quest_campaigns: Campaign | null }) => {
@@ -519,7 +518,6 @@ export default function QuestsPage() {
         <PuzzleModal
           node={activeNode} playerId={playerId}
           themeId={themeId} pieceSetId={pieceSetId}
-          flipped={boardFlipped}
           onClose={handleModalClose}
         />
       )}
