@@ -23,14 +23,18 @@ export type PieceSetDef = {
   whiteShadow: string
   blackShadow: string
   burstColor:  string
+  imageBase?:  string  // Lichess SVG piece set base URL (if set, images override Unicode)
 }
 
 export const BOARD_THEMES: Record<ThemeId, BoardTheme> = {
   classic: {
     id: "classic", displayName: "Classic", emoji: "🏛️",
     lightSquare: "#f0d9b5", darkSquare: "#b58863",
-    border: "#8B6914", selectedSquare: "#f6f669cc",
-    lastMoveSquare: "#cdd16acc", hintColor: "#1baca6",
+    border: "#8B6914",
+    selectedSquare: "rgba(255,215,0,0.65)",
+    lastMoveSquare: "rgba(155,199,0,0.45)",
+    hintColor: "#1baca6",
+    glow: "0 8px 40px rgba(0,0,0,0.55), 0 0 0 3px #8B691466",
   },
   cyberpunk_neon: {
     id: "cyberpunk_neon", displayName: "Neon Hackers", emoji: "⚡",
@@ -66,6 +70,7 @@ export const PIECE_SETS: Record<PieceSetId, PieceSetDef> = {
     whitePiece: "#ffffff", blackPiece: "#1a1a1a",
     whiteShadow: "0 1px 3px rgba(0,0,0,0.9)", blackShadow: "0 1px 2px rgba(255,255,255,0.4)",
     burstColor: "#f0d9b5",
+    imageBase: "https://lichess1.org/assets/piece/cburnett/",
   },
   robo_mechs: {
     id: "robo_mechs", displayName: "Robo Mechs", emoji: "🤖",

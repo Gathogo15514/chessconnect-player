@@ -7,9 +7,15 @@ import { playMoveSound, playCaptureSound, playSolveSound } from "@/lib/chess-sou
 const SQUARE_SIZE = 44
 const BOARD_PX = SQUARE_SIZE * 8
 
+// Maps FEN piece chars to Lichess SVG filenames (e.g. "K" → "wK", "k" → "bK")
+const PIECE_TO_LICHESS: Record<string, string> = {
+  K: "wK", Q: "wQ", R: "wR", B: "wB", N: "wN", P: "wP",
+  k: "bK", q: "bQ", r: "bR", b: "bB", n: "bN", p: "bP",
+}
+
 type Props = {
   fen: string
-  solutionMoves: string[]   // e.g. ["e2e4","e7e5","g1f3"]
+  solutionMoves: string[]   // UCI moves, e.g. ["e2e4","e7e5","g1f3"]
   themeId: ThemeId
   pieceSetId: PieceSetId
   onSolve?: () => void
@@ -49,7 +55,11 @@ function applyMove(board: (string | null)[][], move: string): (string | null)[][
   const tr = 8 - parseInt(move[3])
   const piece = next[fr][fc]
   if (!piece) return next
-  next[tr][tc] = piece
+  // pawn promotion: use explicit promotion char if present, else auto-queen
+  const promoChar = move[4]
+  next[tr][tc] = promoChar
+    ? (piece === piece.toUpperCase() ? promoChar.toUpperCase() : promoChar.toLowerCase())
+    : piece
   next[fr][fc] = null
   // castling
   if (piece === "K" && fc === 4) {
@@ -60,9 +70,11 @@ function applyMove(board: (string | null)[][], move: string): (string | null)[][
     if (tc === 6) { next[0][5] = "r"; next[0][7] = null }
     if (tc === 2) { next[0][3] = "r"; next[0][0] = null }
   }
-  // pawn promotion — auto-queen
-  if (piece === "P" && tr === 0) next[tr][tc] = "Q"
-  if (piece === "p" && tr === 7) next[tr][tc] = "q"
+  // auto-queen fallback (if no promo char)
+  if (!promoChar) {
+    if (piece === "P" && tr === 0) next[tr][tc] = "Q"
+    if (piece === "p" && tr === 7) next[tr][tc] = "q"
+  }
   return next
 }
 
@@ -101,19 +113,26 @@ export default function ChessBoard({
   const theme    = BOARD_THEMES[themeId]
   const pieceSet = PIECE_SETS[pieceSetId]
 
-  const [board, setBoard]       = useState<(string | null)[][]>(() => fenToBoard(fen))
-  const [moveIdx, setMoveIdx]   = useState(0)
-  const [selected, setSelected] = useState<[number, number] | null>(null)
-  const [lastMove, setLastMove] = useState<string | null>(null)
-  const [hint, setHint]         = useState(false)
-  const [msg, setMsg]           = useState<string | null>(null)
-  const [solved, setSolved]     = useState(false)
+  const [board,       setBoard]       = useState<(string | null)[][]>(() => fenToBoard(fen))
+  const [moveIdx,     setMoveIdx]     = useState(0)
+  const [selected,    setSelected]    = useState<[number, number] | null>(null)
+  const [lastMove,    setLastMove]    = useState<string | null>(null)
+  const [hint,        setHint]        = useState(false)
+  const [msg,         setMsg]         = useState<string | null>(null)
+  const [solved,      setSolved]      = useState(false)
+  const [playerTurn,  setPlayerTurn]  = useState(true)
 
   const canvasRef  = useRef<HTMLCanvasElement>(null)
   const particles  = useRef<Particle[]>([])
   const rafRef     = useRef<number>(0)
 
-  // reset when fen / solution changes
+  // Whose turn it is in the initial FEN — determines which color the player controls
+  const fenTurn      = fen.split(" ")[1] as "w" | "b"
+  // In puzzle mode, player always controls the color whose turn it is in the starting FEN.
+  // In freePlay mode (duel), same — the FEN prop is updated by the parent after each move.
+  const playerColor: "w" | "b" = fenTurn
+
+  // Reset when puzzle changes
   useEffect(() => {
     setBoard(fenToBoard(fen))
     setMoveIdx(0)
@@ -122,9 +141,10 @@ export default function ChessBoard({
     setHint(false)
     setMsg(null)
     setSolved(false)
+    setPlayerTurn(true)
   }, [fen, solutionMoves.join(",")])
 
-  // canvas animation loop
+  // Canvas animation loop
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -159,16 +179,15 @@ export default function ChessBoard({
     particles.current.push(...spawnBurst(cx, cy, color))
   }, [flipped])
 
-  // whose turn it is: in freePlay, read from FEN; in puzzle mode always white
-  const fenTurn   = fen.split(" ")[1] as "w" | "b"
-  const playerColor: "w" | "b" = freePlay ? fenTurn : "w"
-
   function squareCoords(col: number, row: number): [number, number] {
     return flipped ? [7 - col, 7 - row] : [col, row]
   }
 
   function handleSquareClick(dispCol: number, dispRow: number) {
     if (solved) return
+    // Block clicks while opponent is auto-playing their move
+    if (!freePlay && !playerTurn) return
+
     const [col, row] = squareCoords(dispCol, dispRow)
 
     if (selected === null) {
@@ -206,18 +225,19 @@ export default function ChessBoard({
       // ── Puzzle mode ───────────────────────────────────────────────────────────
       const expected = solutionMoves[moveIdx]
 
-      if (!expected || attempted !== expected) {
-        setMsg("⚠️ Path Blocked! Try another vector!")
+      // Match first 4 chars so promotion moves (e.g. "e7e8q") match "e7e8"
+      if (!expected || !expected.startsWith(attempted)) {
+        setMsg("⚠️ Not the right move — try again!")
         setSelected(null)
         return
       }
 
-      // correct move
+      // Correct move
       const isCapture = board[row][col] !== null
-      const nextBoard = applyMove(board, attempted)
+      const nextBoard = applyMove(board, expected) // use full expected (includes promo char)
 
       setBoard(nextBoard)
-      setLastMove(attempted)
+      setLastMove(expected)
       setSelected(null)
       setMsg(null)
 
@@ -230,56 +250,57 @@ export default function ChessBoard({
         playMoveSound(themeId)
       }
 
-      onMove?.(attempted)
+      onMove?.(expected)
       const nextIdx = moveIdx + 1
 
       if (nextIdx >= solutionMoves.length) {
         setSolved(true)
-        setMsg("🎉 Puzzle Cleared! Excellent tactics!")
+        setMsg("🎉 Brilliant! Puzzle cleared!")
         playSolveSound(themeId)
         onSolve?.()
         onNodeCleared?.()
         return
       }
 
-      // auto-play opponent move
-      if (nextIdx < solutionMoves.length) {
-        setTimeout(() => {
-          const oppMove = solutionMoves[nextIdx]
-          const oppBoard = applyMove(nextBoard, oppMove)
-          const oppTc = FILES.indexOf(oppMove[2])
-          const oppTr = 8 - parseInt(oppMove[3])
-          const oppCapture = nextBoard[oppTr][oppTc] !== null
-          setBoard(oppBoard)
-          setLastMove(oppMove)
-          setMoveIdx(nextIdx + 1)
-          if (oppCapture) {
-            burst(oppTc, oppTr, "#ff4444")
-            playCaptureSound(themeId)
-          } else {
-            playMoveSound(themeId)
-          }
-          if (nextIdx + 1 >= solutionMoves.length) {
-            setSolved(true)
-            setMsg("🎉 Puzzle Cleared! Excellent tactics!")
-            playSolveSound(themeId)
-            onSolve?.()
-            onNodeCleared?.()
-          }
-        }, 700)
-        setMoveIdx(nextIdx) // will be overwritten after timeout but prevents double-click
-      }
+      // Auto-play opponent's response
+      setPlayerTurn(false)
+      setMoveIdx(nextIdx)
+      setTimeout(() => {
+        const oppMove = solutionMoves[nextIdx]
+        const oppBoard = applyMove(nextBoard, oppMove)
+        const oppTc = FILES.indexOf(oppMove[2])
+        const oppTr = 8 - parseInt(oppMove[3])
+        const oppCapture = nextBoard[oppTr][oppTc] !== null
+        setBoard(oppBoard)
+        setLastMove(oppMove)
+        setMoveIdx(nextIdx + 1)
+        if (oppCapture) {
+          burst(oppTc, oppTr, "#ff4444")
+          playCaptureSound(themeId)
+        } else {
+          playMoveSound(themeId)
+        }
+        if (nextIdx + 1 >= solutionMoves.length) {
+          setSolved(true)
+          setMsg("🎉 Brilliant! Puzzle cleared!")
+          playSolveSound(themeId)
+          onSolve?.()
+          onNodeCleared?.()
+        } else {
+          setPlayerTurn(true)
+        }
+      }, 700)
     }
   }
 
   function showHint() {
-    if (solved || moveIdx >= solutionMoves.length) return
+    if (solved || moveIdx >= solutionMoves.length || !playerTurn) return
     const move = solutionMoves[moveIdx]
     const fc = FILES.indexOf(move[0])
     const fr = 8 - parseInt(move[1])
     setSelected([fc, fr])
     setHint(true)
-    setMsg("💡 Hint activated — find the best continuation!")
+    setMsg("💡 Hint — find the best continuation!")
   }
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -302,7 +323,7 @@ export default function ChessBoard({
       if (isSelected) bgColor = theme.selectedSquare
       else if (isLastMove) bgColor = theme.lastMoveSquare
 
-      // hint dot
+      // Hint destination dot
       const isHintDest = hint && moveIdx < solutionMoves.length &&
         FILES[col] === solutionMoves[moveIdx][2] &&
         String(8 - row) === solutionMoves[moveIdx][3]
@@ -310,6 +331,7 @@ export default function ChessBoard({
       const isWhitePiece = piece && piece === piece.toUpperCase()
       const pieceColor   = piece ? (isWhitePiece ? pieceSet.whitePiece : pieceSet.blackPiece) : undefined
       const pieceShadow  = piece ? (isWhitePiece ? pieceSet.whiteShadow : pieceSet.blackShadow) : undefined
+      const lichessFile  = piece ? PIECE_TO_LICHESS[piece] : undefined
 
       squares.push(
         <div
@@ -346,34 +368,55 @@ export default function ChessBoard({
               pointerEvents: "none",
             }} />
           )}
-          {/* piece */}
+
+          {/* piece — SVG image if pieceSet has imageBase, else Unicode */}
           {piece && (
-            <span style={{
-              fontSize: 28,
-              lineHeight: 1,
-              color: pieceColor,
-              textShadow: pieceShadow,
-              position: "relative",
-              zIndex: 1,
-            }}>
-              {PIECE_UNICODE[piece] ?? piece}
-            </span>
+            pieceSet.imageBase && lichessFile ? (
+              <img
+                src={`${pieceSet.imageBase}${lichessFile}.svg`}
+                alt={piece}
+                draggable={false}
+                style={{
+                  width:  SQUARE_SIZE - 4,
+                  height: SQUARE_SIZE - 4,
+                  objectFit: "contain",
+                  pointerEvents: "none",
+                  position: "relative",
+                  zIndex: 1,
+                  filter: isSelected ? "drop-shadow(0 0 4px rgba(255,215,0,0.8))" : undefined,
+                }}
+              />
+            ) : (
+              <span style={{
+                fontSize: 30,
+                lineHeight: 1,
+                color: pieceColor,
+                textShadow: pieceShadow,
+                position: "relative",
+                zIndex: 1,
+              }}>
+                {PIECE_UNICODE[piece] ?? piece}
+              </span>
+            )
           )}
+
           {/* rank/file labels */}
           {dispCol === 0 && (
             <span style={{
-              position: "absolute", top: 1, left: 2,
-              fontSize: 9, color: isLight ? theme.darkSquare : theme.lightSquare,
-              opacity: 0.7, lineHeight: 1, pointerEvents: "none",
+              position: "absolute", top: 2, left: 2,
+              fontSize: 9, fontWeight: 700,
+              color: isLight ? theme.darkSquare : theme.lightSquare,
+              opacity: 0.85, lineHeight: 1, pointerEvents: "none",
             }}>
               {8 - row}
             </span>
           )}
           {dispRow === 7 && (
             <span style={{
-              position: "absolute", bottom: 1, right: 3,
-              fontSize: 9, color: isLight ? theme.darkSquare : theme.lightSquare,
-              opacity: 0.7, lineHeight: 1, pointerEvents: "none",
+              position: "absolute", bottom: 2, right: 3,
+              fontSize: 9, fontWeight: 700,
+              color: isLight ? theme.darkSquare : theme.lightSquare,
+              opacity: 0.85, lineHeight: 1, pointerEvents: "none",
             }}>
               {FILES[col]}
             </span>
@@ -385,62 +428,70 @@ export default function ChessBoard({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-      {/* board wrapper */}
+      {/* Board frame */}
       <div style={{
-        position: "relative",
-        width: BOARD_PX,
-        height: BOARD_PX,
-        border: `3px solid ${theme.border}`,
-        borderRadius: 6,
-        overflow: "hidden",
-        boxShadow: theme.glow ?? undefined,
+        padding: 4,
+        background: "#3d1a00",
+        borderRadius: 8,
+        boxShadow: "0 12px 48px rgba(0,0,0,0.7), 0 2px 8px rgba(0,0,0,0.5)",
       }}>
-        {/* Layer 1 + 2: squares and pieces */}
-        {squares}
+        <div style={{
+          position: "relative",
+          width: BOARD_PX,
+          height: BOARD_PX,
+          border: `2px solid ${theme.border}`,
+          borderRadius: 4,
+          overflow: "hidden",
+          boxShadow: theme.glow ?? "0 4px 24px rgba(0,0,0,0.4)",
+        }}>
+          {squares}
 
-        {/* Layer 3: particle canvas */}
-        <canvas
-          ref={canvasRef}
-          width={BOARD_PX}
-          height={BOARD_PX}
-          style={{
-            position: "absolute",
-            inset: 0,
-            pointerEvents: "none",
-            zIndex: 10,
-          }}
-        />
+          {/* Particle canvas */}
+          <canvas
+            ref={canvasRef}
+            width={BOARD_PX}
+            height={BOARD_PX}
+            style={{
+              position: "absolute",
+              inset: 0,
+              pointerEvents: "none",
+              zIndex: 10,
+            }}
+          />
+        </div>
       </div>
 
-      {/* feedback message */}
+      {/* Feedback message */}
       {msg && (
         <div style={{
-          fontSize: 13, fontWeight: 600,
+          fontSize: 13, fontWeight: 700,
           color: solved ? "#4ade80" : "#fbbf24",
-          textAlign: "center", minHeight: 20,
+          textAlign: "center",
           textShadow: "0 1px 4px rgba(0,0,0,0.6)",
-          padding: "4px 12px",
-          background: "rgba(0,0,0,0.35)",
-          borderRadius: 8,
+          padding: "6px 16px",
+          background: solved ? "rgba(16,185,129,0.12)" : "rgba(251,191,36,0.1)",
+          border: `1px solid ${solved ? "rgba(16,185,129,0.3)" : "rgba(251,191,36,0.25)"}`,
+          borderRadius: 10,
           maxWidth: BOARD_PX,
         }}>
           {msg}
         </div>
       )}
 
-      {/* controls */}
-      {!solved && !freePlay && (
+      {/* Hint button */}
+      {!solved && !freePlay && playerTurn && (
         <button
           onClick={showHint}
           style={{
             fontSize: 12, padding: "5px 14px",
-            background: "rgba(255,255,255,0.08)",
-            border: `1px solid ${theme.hintColor}66`,
-            borderRadius: 6, color: theme.hintColor,
+            background: "rgba(255,255,255,0.06)",
+            border: `1px solid ${theme.hintColor}55`,
+            borderRadius: 8, color: theme.hintColor,
             cursor: "pointer",
+            transition: "all 0.15s",
           }}
         >
-          Activate Tactical Scouter →
+          💡 Show Hint
         </button>
       )}
     </div>

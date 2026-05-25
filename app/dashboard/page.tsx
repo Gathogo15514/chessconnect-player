@@ -260,28 +260,26 @@ export default function DashboardPage() {
                     {player?.fide_id ? ` · FIDE ${player.fide_id}` : ""}
                   </p>
 
-                  {/* Level + XP bar */}
-                  {gp && (
-                    <div style={{ marginTop: 10 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                        <span style={{ color: "#94a3b8", fontSize: 10, fontWeight: 600 }}>
-                          LEVEL {gp.current_level}
-                        </span>
-                        <span style={{ color: "#10b981", fontSize: 10, fontWeight: 700 }}>
-                          {xpProgress}% · {gp.total_xp.toLocaleString()} XP
-                        </span>
-                      </div>
-                      <div style={{ height: 8, background: "rgba(255,255,255,0.06)", borderRadius: 99, overflow: "hidden" }}>
-                        <div style={{
-                          width: `${xpProgress}%`, height: "100%", borderRadius: 99,
-                          background: "linear-gradient(90deg, #10b981, #34d399, #10b981)",
-                          backgroundSize: "200% auto",
-                          animation: "xp-shimmer 2s linear infinite",
-                          boxShadow: "0 0 10px rgba(16,185,129,0.5)",
-                        }} />
-                      </div>
+                  {/* Level + XP bar — always show; defaults to level 1, 0 XP */}
+                  <div style={{ marginTop: 10 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                      <span style={{ color: "#94a3b8", fontSize: 10, fontWeight: 600 }}>
+                        LEVEL {gp?.current_level ?? 1}
+                      </span>
+                      <span style={{ color: "#10b981", fontSize: 10, fontWeight: 700 }}>
+                        {xpProgress}% · {(gp?.total_xp ?? 0).toLocaleString()} XP
+                      </span>
                     </div>
-                  )}
+                    <div style={{ height: 8, background: "rgba(255,255,255,0.06)", borderRadius: 99, overflow: "hidden" }}>
+                      <div style={{
+                        width: `${Math.max(2, xpProgress)}%`, height: "100%", borderRadius: 99,
+                        background: "linear-gradient(90deg, #10b981, #34d399, #10b981)",
+                        backgroundSize: "200% auto",
+                        animation: "xp-shimmer 2s linear infinite",
+                        boxShadow: "0 0 10px rgba(16,185,129,0.5)",
+                      }} />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -347,7 +345,7 @@ export default function DashboardPage() {
                   Gold 🪙
                 </p>
                 <p style={{ color: "#f59e0b", fontWeight: 800, fontSize: 24, marginTop: 4 }}>
-                  {gp?.gold_balance?.toLocaleString() ?? "—"}
+                  {(gp?.gold_balance ?? 0).toLocaleString()}
                 </p>
               </div>
 
@@ -380,7 +378,7 @@ export default function DashboardPage() {
                   Total XP ⚡
                 </p>
                 <p style={{ color: "#a78bfa", fontWeight: 800, fontSize: 22, marginTop: 4 }}>
-                  {gp?.total_xp?.toLocaleString() ?? "—"}
+                  {(gp?.total_xp ?? 0).toLocaleString()}
                 </p>
               </div>
             </div>
