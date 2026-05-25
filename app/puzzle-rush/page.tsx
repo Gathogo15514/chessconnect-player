@@ -60,6 +60,23 @@ export default function PuzzleRushPage() {
 
   async function fetchPuzzle() {
     setLoading(true)
+
+    // Try Lichess first (real puzzles with ratings)
+    try {
+      const res = await fetch("/api/lichess-puzzle")
+      if (res.ok) {
+        const lp = await res.json() as Puzzle
+        if (lp.fen_position && lp.solution_moves?.length && !usedIds.current.has(lp.id)) {
+          usedIds.current.add(lp.id)
+          setPuzzle(lp)
+          setPuzzleKey(k => k + 1)
+          setLoading(false)
+          return
+        }
+      }
+    } catch { /* fall through to quest_nodes */ }
+
+    // Fallback: quest_nodes from Supabase
     const supabase = createClient()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: rows } = await (supabase.from("quest_nodes") as any)
