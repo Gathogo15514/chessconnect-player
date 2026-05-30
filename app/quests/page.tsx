@@ -428,21 +428,48 @@ function CampaignTrail({ assignment, level, compSet, onNodeClick }: {
   )
 }
 
+// ── Types for Library tab ─────────────────────────────────────────────────────
+type LibraryCampaign = {
+  id: string
+  title: string
+  description?: string | null
+  cover_emoji?: string | null
+  curriculum_type: string
+  difficulty_from?: number | null
+  difficulty_to?: number | null
+  estimated_minutes?: number | null
+  quest_nodes?: { id: string }[]
+}
+
+const LIBRARY_SECTIONS: { type: string; label: string; icon: string }[] = [
+  { type: "opening",  label: "Openings",  icon: "♟️" },
+  { type: "tactics",  label: "Tactics",   icon: "⚔️" },
+  { type: "endgame",  label: "Endgames",  icon: "♔" },
+  { type: "system",   label: "System",    icon: "🌐" },
+]
+
+const MAIN_API = process.env.NEXT_PUBLIC_MAIN_API_URL ?? ""
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function QuestsPage() {
   const router = useRouter()
-  const [assignments, setAssignments] = useState<Assignment[]>([])
-  const [level,       setLevel]       = useState(1)
-  const [gold,        setGold]        = useState(0)
-  const [streak,      setStreak]      = useState(0)
-  const [srDue,       setSrDue]       = useState(0)
-  const [loading,     setLoading]     = useState(true)
-  const [playerId,    setPlayerId]    = useState<string | null>(null)
-  const [activeNode,  setActiveNode]  = useState<Node | null>(null)
-  const [themeId,     setThemeId]     = useState<ThemeId>("classic")
-  const [pieceSetId,  setPieceSetId]  = useState<PieceSetId>("standard")
-  // boardFlipped removed — puzzles auto-flip based on FEN turn
-  const [allCompSet,  setAllCompSet]  = useState<Set<string>>(new Set())
+  const [tab,          setTab]          = useState<"quests" | "library">("quests")
+  const [assignments,  setAssignments]  = useState<Assignment[]>([])
+  const [level,        setLevel]        = useState(1)
+  const [gold,         setGold]         = useState(0)
+  const [streak,       setStreak]       = useState(0)
+  const [srDue,        setSrDue]        = useState(0)
+  const [loading,      setLoading]      = useState(true)
+  const [playerId,     setPlayerId]     = useState<string | null>(null)
+  const [activeNode,   setActiveNode]   = useState<Node | null>(null)
+  const [themeId,      setThemeId]      = useState<ThemeId>("classic")
+  const [pieceSetId,   setPieceSetId]   = useState<PieceSetId>("standard")
+  const [allCompSet,   setAllCompSet]   = useState<Set<string>>(new Set())
+  // Library state
+  const [library,      setLibrary]      = useState<LibraryCampaign[]>([])
+  const [libraryLoad,  setLibraryLoad]  = useState(false)
+  const [enrolledIds,  setEnrolledIds]  = useState<Set<string>>(new Set())
+  const [enrolling,    setEnrolling]    = useState<string | null>(null)
 
   async function loadData(supabase: ReturnType<typeof createClient>, pid: string) {
     const [gpRes, assignRes, srRes] = await Promise.all([
@@ -488,6 +515,51 @@ export default function QuestsPage() {
     setAllCompSet(cs)
   }
 
+  async function loadLibrary(pid: string) {
+    setLibraryLoad(true)
+    try {
+      const supabase = createClient()
+      const [libRes, enrollRes] = await Promise.all([
+        fetch(`${MAIN_API}/api/quests/campaigns?public=true`),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase.from("player_quest_enrollments") as any)
+          .select("campaign_id")
+          .eq("player_id", pid),
+      ])
+      if (libRes.ok) {
+        const campaigns: LibraryCampaign[] = await libRes.json()
+        setLibrary(campaigns)
+      }
+      const enrolled = new Set<string>((enrollRes.data ?? []).map((e: { campaign_id: string }) => e.campaign_id))
+      setEnrolledIds(enrolled)
+    } catch { /* silent */ }
+    setLibraryLoad(false)
+  }
+
+  async function handleEnroll(campaignId: string) {
+    if (enrolling || enrolledIds.has(campaignId)) return
+    setEnrolling(campaignId)
+    const supabase = createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { router.replace("/login"); return }
+    try {
+      const res = await fetch(`${MAIN_API}/api/quests/enroll`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ campaignId }),
+      })
+      if (res.ok) {
+        setEnrolledIds(prev => new Set([...prev, campaignId]))
+        // Refresh assignments so the new campaign appears in My Quests
+        if (playerId) {
+          const client = createClient()
+          await loadData(client, playerId)
+        }
+      }
+    } catch { /* silent */ }
+    setEnrolling(null)
+  }
+
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -497,7 +569,10 @@ export default function QuestsPage() {
         .select("id").eq("profile_id", session.user.id).maybeSingle()
       if (!player) { setLoading(false); return }
       setPlayerId(player.id)
-      await loadData(supabase, player.id)
+      await Promise.all([
+        loadData(supabase, player.id),
+        loadLibrary(player.id),
+      ])
       setLoading(false)
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -522,27 +597,46 @@ export default function QuestsPage() {
       )}
 
       {/* Header */}
-      <header style={{ padding:"16px 18px 12px", background:"#1B5E35", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-          <span style={{ fontFamily:"serif", fontSize:20, color:"#fff" }}>⚔</span>
-          <span style={{ fontFamily:"var(--font-display)", fontSize:22, color:"#fff", letterSpacing:"0.04em" }}>QUEST MAP</span>
+      <header style={{ background:"#1B5E35" }}>
+        <div style={{ padding:"16px 18px 12px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+            <span style={{ fontFamily:"serif", fontSize:20, color:"#fff" }}>⚔</span>
+            <span style={{ fontFamily:"var(--font-display)", fontSize:22, color:"#fff", letterSpacing:"0.04em" }}>QUEST MAP</span>
+          </div>
+          <div style={{ display:"flex", gap:6 }}>
+            <a href="/puzzle-rush" style={{ fontFamily:"var(--font-display)", fontSize:10, letterSpacing:"0.08em", padding:"5px 12px", borderRadius:99, background:"rgba(255,255,255,0.15)", border:"1px solid rgba(255,255,255,0.25)", color:"#fff", textDecoration:"none" }}>⚡ RUSH</a>
+            <a href="/duel" style={{ fontFamily:"var(--font-display)", fontSize:10, letterSpacing:"0.08em", padding:"5px 12px", borderRadius:99, background:"rgba(255,255,255,0.1)", border:"1px solid rgba(255,255,255,0.2)", color:"#fff", textDecoration:"none" }}>🤺 DUEL</a>
+          </div>
         </div>
-        <div style={{ display:"flex", gap:6 }}>
-          <a href="/puzzle-rush" style={{ fontFamily:"var(--font-display)", fontSize:10, letterSpacing:"0.08em", padding:"5px 12px", borderRadius:99, background:"rgba(255,255,255,0.15)", border:"1px solid rgba(255,255,255,0.25)", color:"#fff", textDecoration:"none" }}>⚡ RUSH</a>
-          <a href="/duel" style={{ fontFamily:"var(--font-display)", fontSize:10, letterSpacing:"0.08em", padding:"5px 12px", borderRadius:99, background:"rgba(255,255,255,0.1)", border:"1px solid rgba(255,255,255,0.2)", color:"#fff", textDecoration:"none" }}>🤺 DUEL</a>
+        {/* Tabs */}
+        <div style={{ display:"flex", padding:"0 16px 0" }}>
+          {[
+            { key: "quests" as const,  label: "My Quests" },
+            { key: "library" as const, label: "Library"   },
+          ].map(t => (
+            <button key={t.key} onClick={() => setTab(t.key)} style={{
+              flex: 1, padding: "10px 0 8px",
+              background: "none", border: "none", cursor: "pointer",
+              fontFamily: "var(--font-body)", fontSize: 13, fontWeight: tab === t.key ? 700 : 500,
+              color: tab === t.key ? "#fff" : "rgba(255,255,255,0.55)",
+              borderBottom: tab === t.key ? "2.5px solid #fff" : "2.5px solid transparent",
+              transition: "all 0.15s",
+            }}>
+              {t.label}
+            </button>
+          ))}
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-5 space-y-4">
+      <main style={{ maxWidth: 512, margin: "0 auto", padding: "16px 16px 0", display: "flex", flexDirection: "column", gap: 16 }}>
         {loading ? (
-          <div className="flex justify-center py-24">
-            <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin"
-              style={{ borderColor: "#10b981", borderTopColor: "transparent" }} />
+          <div style={{ display: "flex", justifyContent: "center", paddingTop: 96 }}>
+            <div style={{ width: 32, height: 32, border: "3px solid #1B5E35", borderTopColor: "transparent", borderRadius: "50%", animation: "cc-spin 0.8s linear infinite" }} />
           </div>
-        ) : (
+        ) : tab === "quests" ? (
           <>
             {/* Stats row */}
-            <div className="grid grid-cols-3 gap-3">
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
               {[
                 { icon: "♚", label: "LEVEL",  value: String(level),  color: "var(--gold)" },
                 { icon: "🪙", label: "GOLD",   value: String(gold),   color: "var(--gold)" },
@@ -559,16 +653,15 @@ export default function QuestsPage() {
             {/* Boss returns due */}
             {srDue > 0 && (
               <a href="/encounters" style={{ textDecoration: "none" }}>
-                <div style={{ background: "linear-gradient(135deg, #450a0a, #7f1d1d)", borderRadius: 16 }}
-                  className="p-4 flex items-center gap-3">
-                  <span className="text-3xl">👹</span>
+                <div style={{ background: "linear-gradient(135deg, #450a0a, #7f1d1d)", borderRadius: 16, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+                  <span style={{ fontSize: 28 }}>👹</span>
                   <div>
-                    <p className="text-white font-bold text-sm">Boss Returns Due!</p>
-                    <p className="text-red-200 text-xs mt-0.5">{srDue} encounter{srDue > 1 ? "s" : ""} ready</p>
+                    <p style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>Boss Returns Due!</p>
+                    <p style={{ color: "#fca5a5", fontSize: 11, marginTop: 2 }}>{srDue} encounter{srDue > 1 ? "s" : ""} ready</p>
                   </div>
-                  <div className="ml-auto shrink-0 flex items-center gap-2">
-                    <span className="text-2xl font-black text-red-300">{srDue}</span>
-                    <span className="text-red-300 text-sm">→</span>
+                  <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                    <span style={{ fontSize: 22, fontWeight: 900, color: "#fca5a5" }}>{srDue}</span>
+                    <span style={{ color: "#fca5a5", fontSize: 14 }}>→</span>
                   </div>
                 </div>
               </a>
@@ -579,7 +672,10 @@ export default function QuestsPage() {
               <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:20, padding:48, textAlign:"center" }}>
                 <span style={{ fontFamily:"serif", fontSize:52, color:"var(--green-mid)" }}>♜</span>
                 <p style={{ fontFamily:"var(--font-display)", color:"var(--text-2)", fontSize:18, letterSpacing:"0.1em", marginTop:14 }}>NO ACTIVE QUESTS</p>
-                <p style={{ fontSize:12, color:"var(--text-3)", marginTop:8 }}>Your coach will assign campaigns here.</p>
+                <p style={{ fontSize:12, color:"var(--text-3)", marginTop:8 }}>Your coach will assign campaigns — or browse the Library to self-enroll.</p>
+                <button onClick={() => setTab("library")} style={{ marginTop: 16, padding: "10px 20px", background: "#1B5E35", color: "#fff", border: "none", borderRadius: 12, fontFamily: "var(--font-display)", fontSize: 13, cursor: "pointer", letterSpacing: "0.04em" }}>
+                  BROWSE LIBRARY →
+                </button>
               </div>
             ) : (
               assignments.map(a => (
@@ -591,6 +687,75 @@ export default function QuestsPage() {
                   onNodeClick={n => setActiveNode(n)}
                 />
               ))
+            )}
+          </>
+        ) : (
+          /* ── Library tab ─────────────────────────────────── */
+          <>
+            {libraryLoad ? (
+              <div style={{ display: "flex", justifyContent: "center", paddingTop: 96 }}>
+                <div style={{ width: 32, height: 32, border: "3px solid #1B5E35", borderTopColor: "transparent", borderRadius: "50%", animation: "cc-spin 0.8s linear infinite" }} />
+              </div>
+            ) : library.length === 0 ? (
+              <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 20, padding: 48, textAlign: "center" }}>
+                <span style={{ fontSize: 40 }}>📚</span>
+                <p style={{ fontFamily: "var(--font-display)", color: "var(--text-2)", fontSize: 16, marginTop: 12 }}>LIBRARY LOADING</p>
+                <p style={{ fontSize: 12, color: "var(--text-3)", marginTop: 6 }}>Apply migrations 050 and 051 to Supabase to unlock the quest library.</p>
+              </div>
+            ) : (
+              LIBRARY_SECTIONS.map(section => {
+                const campaigns = library.filter(c => c.curriculum_type === section.type)
+                if (campaigns.length === 0) return null
+                return (
+                  <div key={section.type}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                      <span style={{ fontSize: 18 }}>{section.icon}</span>
+                      <p style={{ fontFamily: "var(--font-display)", fontSize: 16, color: "var(--text)", letterSpacing: "0.06em" }}>{section.label.toUpperCase()}</p>
+                      <div style={{ flex: 1, height: 1, background: "var(--border)", marginLeft: 4 }} />
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      {campaigns.map(c => {
+                        const isEnrolled = enrolledIds.has(c.id)
+                        const isEnrolling = enrolling === c.id
+                        const nodeCount = c.quest_nodes?.length ?? 0
+                        return (
+                          <div key={c.id} className="cc-card" style={{ padding: "14px 16px", display: "flex", alignItems: "center", gap: 14 }}>
+                            <div style={{ width: 44, height: 44, borderRadius: 12, background: "var(--green-bg)", border: "1px solid var(--green-mid)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>
+                              {c.cover_emoji ?? "⚔️"}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.title}</p>
+                              <p style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2 }}>
+                                {nodeCount} node{nodeCount !== 1 ? "s" : ""}
+                                {c.difficulty_from ? ` · ${c.difficulty_from}–${c.difficulty_to ?? "?"}` : ""}
+                                {c.estimated_minutes ? ` · ${c.estimated_minutes}m` : ""}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => handleEnroll(c.id)}
+                              disabled={isEnrolled || isEnrolling}
+                              style={{
+                                flexShrink: 0,
+                                padding: "7px 14px",
+                                borderRadius: 10,
+                                border: "none",
+                                fontSize: 12,
+                                fontWeight: 700,
+                                cursor: isEnrolled ? "default" : "pointer",
+                                background: isEnrolled ? "var(--green-bg)" : "#1B5E35",
+                                color: isEnrolled ? "var(--green)" : "#fff",
+                                opacity: isEnrolling ? 0.6 : 1,
+                              }}
+                            >
+                              {isEnrolling ? "…" : isEnrolled ? "✓ Enrolled" : "Enroll"}
+                            </button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })
             )}
           </>
         )}
