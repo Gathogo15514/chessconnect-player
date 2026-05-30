@@ -333,8 +333,8 @@ export default function DuelPage() {
   // ── Render: Lobby ─────────────────────────────────────────────────────────────
   if (duelState === "lobby") {
     return (
-      <div className="min-h-screen pb-20" style={{ background: "#0f172a" }}>
-        <header style={{ background: "#0f172a", borderBottom: "1px solid rgba(16,185,129,0.15)" }}
+      <div className="min-h-screen pb-20" style={{ background: "var(--bg)" }}>
+        <header style={{ background: "#1B5E35" }}
           className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-2xl">⚔️</span>
@@ -522,7 +522,7 @@ export default function DuelPage() {
   const oppColor     = myColor === "white" ? "black" : "white"
 
   return (
-    <div className="min-h-screen pb-20" style={{ background: "#0f172a" }}>
+    <div className="min-h-screen pb-20" style={{ background: "var(--bg)" }}>
       {result && (
         <ResultBanner
           result={result} myColor={myColor}
@@ -531,7 +531,7 @@ export default function DuelPage() {
         />
       )}
 
-      <header style={{ background: "#0f172a", borderBottom: "1px solid rgba(16,185,129,0.15)" }}
+      <header style={{ background: "#1B5E35" }}
         className="px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-2xl">⚔️</span>

@@ -65,7 +65,7 @@ function DiffBar({ rating }: { rating: number | null }) {
   const pct = Math.min(100, Math.round(((r - 500) / 2000) * 100))
   const color = pct < 33 ? "#22c55e" : pct < 66 ? "#f59e0b" : "#ef4444"
   return (
-    <div style={{ height: 4, background: "#374151", borderRadius: 99, marginTop: 4 }}>
+    <div style={{ height: 4, background: "var(--border)", borderRadius: 99, marginTop: 4 }}>
       <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 99 }} />
     </div>
   )
@@ -356,7 +356,7 @@ export default function EncountersPage() {
   const dueToday   = entries.filter(e => e.due_date === today)
 
   return (
-    <div className="min-h-screen pb-20" style={{ background: "#0f172a" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", paddingBottom: 72 }}>
       {active && playerId && (
         <EncounterModal
           entry={active}
@@ -369,13 +369,12 @@ export default function EncountersPage() {
       )}
 
       {/* Header */}
-      <header style={{ background: "linear-gradient(135deg, #450a0a, #1c0505)", borderBottom: "1px solid rgba(239,68,68,0.2)" }}
-        className="px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">👹</span>
+      <header style={{ background: "#1B5E35", padding: "14px 18px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ fontSize: 22 }}>👹</span>
           <div>
-            <p className="font-bold text-white text-base">Boss Returns</p>
-            <p style={{ color: "rgba(252,165,165,0.7)", fontSize: 11 }}>
+            <h1 style={{ fontFamily: "var(--font-display)", fontSize: 22, color: "#fff", letterSpacing: "0.04em" }}>BOSS RETURNS</h1>
+            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", marginTop: 1 }}>
               Spaced repetition training
             </p>
           </div>
@@ -399,26 +398,26 @@ export default function EncountersPage() {
             {/* Progress strip */}
             {totalDue > 0 && (
               <div style={{
-                background: "#1e293b", borderRadius: 16,
-                border: "1px solid rgba(255,255,255,0.06)", padding: "14px 16px",
+                background: "var(--surface)", borderRadius: 16,
+                border: "1px solid var(--border)", padding: "14px 16px",
               }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                  <span style={{ color: "#94a3b8", fontSize: 13, fontWeight: 600 }}>
+                  <span style={{ color: "var(--text-2)", fontSize: 13, fontWeight: 600 }}>
                     Session Progress
                   </span>
-                  <span style={{ color: "#f8fafc", fontSize: 13, fontWeight: 700 }}>
+                  <span style={{ color: "var(--text)", fontSize: 13, fontWeight: 700 }}>
                     {doneCount}/{totalDue}
                   </span>
                 </div>
-                <div style={{ height: 6, background: "#374151", borderRadius: 99, overflow: "hidden" }}>
+                <div style={{ height: 6, background: "var(--surface-2)", borderRadius: 99, overflow: "hidden" }}>
                   <div style={{
                     width: `${completedPct}%`, height: "100%",
-                    background: "linear-gradient(90deg, #10b981, #34d399)",
+                    background: "linear-gradient(90deg, #1B5E35, #2E7D50)",
                     borderRadius: 99, transition: "width 0.5s",
                   }} />
                 </div>
                 {remaining === 0 && doneCount > 0 && (
-                  <p style={{ color: "#4ade80", fontSize: 12, marginTop: 8, fontWeight: 600, textAlign: "center" }}>
+                  <p style={{ color: "var(--green)", fontSize: 12, marginTop: 8, fontWeight: 600, textAlign: "center" }}>
                     🎉 All encounters cleared! Come back tomorrow.
                   </p>
                 )}
@@ -427,15 +426,15 @@ export default function EncountersPage() {
 
             {entries.length === 0 ? (
               <div style={{
-                background: "#1e293b", borderRadius: 20,
-                border: "1px solid rgba(255,255,255,0.06)",
+                background: "var(--surface)", borderRadius: 20,
+                border: "1px solid var(--border)",
                 padding: "48px 24px", textAlign: "center",
               }}>
                 <div style={{ fontSize: 56 }}>🏆</div>
-                <p style={{ color: "#f8fafc", fontWeight: 700, fontSize: 18, marginTop: 12 }}>
+                <p style={{ color: "var(--text)", fontWeight: 700, fontSize: 18, marginTop: 12 }}>
                   {doneCount > 0 ? "All Done!" : "No Encounters Due"}
                 </p>
-                <p style={{ color: "#64748b", fontSize: 13, marginTop: 6 }}>
+                <p style={{ color: "var(--text-2)", fontSize: 13, marginTop: 6 }}>
                   {doneCount > 0
                     ? `You defeated ${doneCount} boss${doneCount > 1 ? "es" : ""}. Come back tomorrow!`
                     : "Your bosses are resting. Defeat new ones in Quest Map to unlock SR training."}
@@ -443,7 +442,7 @@ export default function EncountersPage() {
                 <button onClick={() => router.push("/quests")}
                   style={{
                     marginTop: 20, padding: "10px 24px", borderRadius: 12,
-                    background: "linear-gradient(135deg, #10b981, #059669)",
+                    background: "#1B5E35",
                     color: "#fff", fontWeight: 700, fontSize: 14, border: "none", cursor: "pointer",
                   }}>
                   ⚔️ Go to Quest Map
@@ -467,7 +466,7 @@ export default function EncountersPage() {
                 {/* Due today section */}
                 {dueToday.length > 0 && (
                   <div>
-                    <p style={{ color: "#94a3b8", fontSize: 11, fontWeight: 700,
+                    <p style={{ color: "var(--text-2)", fontSize: 11, fontWeight: 700,
                       textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8, paddingLeft: 4 }}>
                       Due Today ({dueToday.length})
                     </p>
@@ -495,33 +494,32 @@ function EncounterCard({ entry, onFight }: { entry: SrEntry; onFight: () => void
 
   return (
     <div style={{
-      background: "#1e293b",
+      background: "var(--surface)",
       borderRadius: 16,
-      border: `1px solid ${isOverdue ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.06)"}`,
+      border: `1px solid ${isOverdue ? "rgba(220,38,38,0.25)" : "var(--border)"}`,
       overflow: "hidden",
+      boxShadow: isOverdue ? "0 0 0 1px rgba(220,38,38,0.1)" : "var(--shadow-sm)",
     }}>
       <div style={{
-        background: isOverdue
-          ? "linear-gradient(135deg, #450a0a, #1e293b)"
-          : "linear-gradient(135deg, #1e293b, #0f172a)",
+        background: isOverdue ? "rgba(254,242,242,1)" : "var(--surface)",
         padding: "14px 16px",
         display: "flex", alignItems: "center", gap: 14,
       }}>
         <div style={{
           width: 48, height: 48, borderRadius: 12,
-          background: isOverdue ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.05)",
+          background: isOverdue ? "rgba(220,38,38,0.1)" : "var(--green-bg)",
           display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: 24, flexShrink: 0,
-          border: `1px solid ${isOverdue ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.1)"}`,
+          border: `1px solid ${isOverdue ? "rgba(220,38,38,0.2)" : "var(--green-mid)"}`,
         }}>
           👹
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ color: "#f8fafc", fontWeight: 700, fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <p style={{ color: "var(--text)", fontWeight: 700, fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {node?.title ?? motifLabel}
           </p>
-          <p style={{ color: "#94a3b8", fontSize: 11, marginTop: 2 }}>
+          <p style={{ color: "var(--text-2)", fontSize: 11, marginTop: 2 }}>
             {motifLabel} · Rep #{entry.repetitions}
             {entry.last_reviewed ? ` · Last: ${new Date(entry.last_reviewed).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}` : ""}
           </p>
@@ -531,9 +529,9 @@ function EncounterCard({ entry, onFight }: { entry: SrEntry; onFight: () => void
         <button onClick={onFight}
           style={{
             padding: "8px 14px", borderRadius: 10, border: "none", cursor: "pointer",
-            background: isOverdue ? "#dc2626" : "#166534",
+            background: isOverdue ? "#DC2626" : "#1B5E35",
             color: "#fff", fontWeight: 700, fontSize: 13, flexShrink: 0,
-            boxShadow: isOverdue ? "0 0 12px rgba(239,68,68,0.4)" : "none",
+            boxShadow: isOverdue ? "0 2px 8px rgba(220,38,38,0.35)" : "none",
           }}>
           Fight →
         </button>
@@ -543,12 +541,13 @@ function EncounterCard({ entry, onFight }: { entry: SrEntry; onFight: () => void
       <div style={{
         padding: "8px 16px",
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        borderTop: "1px solid rgba(255,255,255,0.04)",
+        borderTop: "1px solid var(--border)",
+        background: "var(--surface-2)",
       }}>
-        <span style={{ color: "#f59e0b", fontSize: 11, fontWeight: 600 }}>
+        <span style={{ color: "var(--gold)", fontSize: 11, fontWeight: 600 }}>
           +{Math.floor((node?.xp_reward ?? 20) / 2)} XP on defeat
         </span>
-        <span style={{ color: "#475569", fontSize: 10 }}>
+        <span style={{ color: "var(--text-3)", fontSize: 10 }}>
           Interval: {entry.interval_days}d · Ease: {entry.ease_factor.toFixed(1)}
         </span>
       </div>

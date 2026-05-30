@@ -175,21 +175,21 @@ export default function PuzzleRushPage() {
   const multiplier = combo >= 5 ? 3 : combo >= 3 ? 2 : 1
 
   return (
-    <div className="min-h-screen bg-stone-950 pb-20">
-      <header className="bg-stone-900 border-b border-stone-800 px-4 py-3 flex items-center justify-between">
-        <button onClick={() => router.back()} className="text-stone-400 hover:text-white text-sm">← Back</button>
-        <div className="flex items-center gap-2">
-          <span className="text-amber-400 text-lg">⚡</span>
-          <span className="font-bold text-white">Puzzle Rush Arena</span>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", paddingBottom: 72 }}>
+      <header style={{ background: "#1B5E35", padding: "14px 18px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <button onClick={() => router.back()} style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", background: "none", border: "none", cursor: "pointer" }}>← Back</button>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 18 }}>⚡</span>
+          <span style={{ fontFamily: "var(--font-display)", fontSize: 18, color: "#fff", letterSpacing: "0.04em" }}>PUZZLE RUSH</span>
         </div>
-        <div className="w-12" />
+        <div style={{ width: 48 }} />
       </header>
 
       <main className="max-w-sm mx-auto px-4 py-4 space-y-4">
 
         {/* Timer + score bar */}
         {phase !== "idle" && (
-          <div className="bg-stone-900 rounded-2xl p-4 border border-stone-800">
+          <div className="cc-card" style={{ padding: 16 }}>
             <div className="flex items-center justify-between">
               <div>
                 <p className={`text-3xl font-mono font-black tabular-nums ${timerColor}`}>
@@ -234,7 +234,7 @@ export default function PuzzleRushPage() {
           <div className="text-center py-8 space-y-6">
             <div>
               <span className="text-7xl">⚡</span>
-              <h1 className="text-2xl font-black text-white mt-4">Puzzle Rush Arena</h1>
+              <h1 style={{ fontFamily: "var(--font-display)", fontSize: 26, color: "var(--text)", marginTop: 16, letterSpacing: "0.04em" }}>Puzzle Rush Arena</h1>
               <p className="text-stone-400 mt-2 text-sm">Solve as many puzzles as you can in 3 minutes!</p>
             </div>
             <div className="grid grid-cols-3 gap-3 text-center">
@@ -243,7 +243,7 @@ export default function PuzzleRushPage() {
                 { icon: "⏱️", label: "+3 sec",   desc: "per solve"   },
                 { icon: "🏆", label: "Top Score", desc: "beat your best" },
               ].map(c => (
-                <div key={c.label} className="bg-stone-900 border border-stone-800 rounded-xl p-3">
+                <div key={c.label} className="cc-card" style={{ padding: 12 }}>
                   <span className="text-2xl">{c.icon}</span>
                   <p className="text-white text-xs font-bold mt-1">{c.label}</p>
                   <p className="text-stone-500 text-[10px]">{c.desc}</p>
@@ -252,7 +252,7 @@ export default function PuzzleRushPage() {
             </div>
             <button
               onClick={startRush}
-              className="w-full py-4 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-lg rounded-2xl transition-colors"
+              className="cc-btn-primary" style={{ fontSize: 16, fontWeight: 800, borderRadius: 16 }}
             >
               ⚡ Start Rush!
             </button>
@@ -268,7 +268,7 @@ export default function PuzzleRushPage() {
               </div>
             ) : (
               <>
-                <div className="bg-stone-900 rounded-2xl border border-stone-800 p-4 flex flex-col items-center">
+                <div className="cc-card" style={{ padding: 16, display: "flex", flexDirection: "column", alignItems: "center" }}>
                   <ChessBoard
                     key={puzzleKey}
                     fen={puzzle.fen_position}
@@ -283,7 +283,7 @@ export default function PuzzleRushPage() {
                 </div>
                 <button
                   onClick={handleSkip}
-                  className="w-full py-3 border border-stone-700 text-stone-400 hover:text-white hover:border-stone-500 rounded-xl text-sm font-medium transition-colors"
+                  className="cc-btn-ghost" style={{ width: "100%", fontSize: 13, borderRadius: 12 }}
                 >
                   Skip (lose combo)
                 </button>
@@ -299,7 +299,7 @@ export default function PuzzleRushPage() {
               <span className="text-6xl">🏆</span>
               <h2 className="text-2xl font-black text-white mt-3">Time&apos;s Up!</h2>
             </div>
-            <div className="bg-stone-900 rounded-2xl border border-stone-800 p-5 space-y-3">
+            <div className="cc-card" style={{ padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
               {[
                 { label: "Final Score",  value: score,               color: "text-amber-400" },
                 { label: "Puzzles Solved", value: solved,            color: "text-emerald-400" },
@@ -307,7 +307,7 @@ export default function PuzzleRushPage() {
                 { label: "Best Combo",   value: `${bestCombo}x`,     color: "text-orange-400" },
               ].map(s => (
                 <div key={s.label} className="flex justify-between items-center">
-                  <span className="text-stone-400 text-sm">{s.label}</span>
+                  <span style={{ fontSize: 13, color: "var(--text-3)" }}>{s.label}</span>
                   <span className={`font-black text-lg tabular-nums ${s.color}`}>{s.value}</span>
                 </div>
               ))}
@@ -315,13 +315,13 @@ export default function PuzzleRushPage() {
             <div className="flex gap-3">
               <button
                 onClick={startRush}
-                className="flex-1 py-3 bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold rounded-xl transition-colors"
+                className="cc-btn-primary" style={{ flex: 1, fontSize: 14, fontWeight: 700, borderRadius: 12 }}
               >
                 ⚡ Play Again
               </button>
               <button
                 onClick={() => router.push("/quests")}
-                className="flex-1 py-3 border border-stone-700 text-stone-300 hover:text-white rounded-xl text-sm font-medium transition-colors"
+                className="cc-btn-ghost" style={{ flex: 1, fontSize: 13, borderRadius: 12 }}
               >
                 Quest Map
               </button>
@@ -332,11 +332,11 @@ export default function PuzzleRushPage() {
         {/* Stats row (always visible when playing/done) */}
         {phase !== "idle" && (
           <div className="grid grid-cols-2 gap-3 text-center">
-            <div className="bg-stone-900 border border-stone-800 rounded-xl p-3">
+            <div className="cc-card" style={{ padding: 12 }}>
               <p className="text-emerald-400 text-xl font-black">{solved}</p>
               <p className="text-stone-500 text-[10px] uppercase tracking-wide">Solved</p>
             </div>
-            <div className="bg-stone-900 border border-stone-800 rounded-xl p-3">
+            <div className="cc-card" style={{ padding: 12 }}>
               <p className="text-red-400 text-xl font-black">{failed}</p>
               <p className="text-stone-500 text-[10px] uppercase tracking-wide">Skipped</p>
             </div>

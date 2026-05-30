@@ -146,10 +146,13 @@ export default function MedicalPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#070B17", paddingBottom: 80 }}>
-      <header style={{ padding: "18px 16px 14px", background: "linear-gradient(180deg, #0D1224 0%, transparent 100%)", display: "flex", alignItems: "center", gap: 10, position: "sticky", top: 0, zIndex: 40 }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", paddingBottom: 72 }}>
+      <header style={{ background: "#1B5E35", padding: "16px 18px", display: "flex", alignItems: "center", gap: 10 }}>
         <span style={{ fontSize: 22 }}>🏥</span>
-        <span style={{ fontFamily: "var(--cc-font-display)", fontWeight: 800, fontSize: 19, color: "#F1F5F9" }}>Medical Profile</span>
+        <div>
+          <h1 style={{ fontFamily: "var(--font-display)", fontSize: 22, color: "#fff", letterSpacing: "0.04em" }}>MEDICAL PROFILE</h1>
+          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", marginTop: 1 }}>Health info &amp; emergency contacts</p>
+        </div>
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-4">
@@ -160,17 +163,17 @@ export default function MedicalPage() {
         ) : (
           <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-              <span style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 13, color: "#475569", letterSpacing: "0.08em", textTransform: "uppercase" }}>Medical Profile</span>
-              <span style={{ fontSize: 10, color: "#334155", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 8, padding: "3px 8px" }}>🔒 Private</span>
+              <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, color: "var(--text-2)", letterSpacing: "0.08em", textTransform: "uppercase" }}>Medical Profile</span>
+              <span style={{ fontSize: 10, color: "var(--text-3)", background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 8, padding: "3px 8px" }}>🔒 Private</span>
             </div>
 
             {/* Blood type */}
-            <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: 16 }}>
+            <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 20, padding: 16 }}>
               <label className="cc-label">Blood Type</label>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {BLOOD_TYPES.map(bt => (
                   <button type="button" key={bt} onClick={() => setBloodType(bt === bloodType ? "" : bt)}
-                    style={{ padding: "6px 14px", borderRadius: 10, fontSize: 13, fontWeight: 700, border: `2px solid ${bloodType === bt ? "#EF4444" : "rgba(255,255,255,0.08)"}`, background: bloodType === bt ? "#EF4444" : "rgba(255,255,255,0.04)", color: bloodType === bt ? "#fff" : "#64748B", cursor: "pointer", transition: "all 0.15s" }}>
+                    style={{ padding: "6px 14px", borderRadius: 10, fontSize: 13, fontWeight: 700, border: `2px solid ${bloodType === bt ? "#DC2626" : "var(--border-med)"}`, background: bloodType === bt ? "#DC2626" : "var(--surface-2)", color: bloodType === bt ? "#fff" : "var(--text-2)", cursor: "pointer", transition: "all 0.15s" }}>
                     {bt}
                   </button>
                 ))}
@@ -178,8 +181,8 @@ export default function MedicalPage() {
             </div>
 
             {/* Medical info */}
-            <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
-              <p style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 12, color: "#475569", letterSpacing: "0.08em", textTransform: "uppercase" }}>Medical Information</p>
+            <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 20, padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
+              <p style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12, color: "var(--text-2)", letterSpacing: "0.08em", textTransform: "uppercase" }}>Medical Information</p>
               <TagInput label="Allergies"   items={allergies}   suggestions={COMMON_ALLERGIES}  onChange={setAllergies}   />
               <TagInput label="Conditions"  items={conditions}  suggestions={COMMON_CONDITIONS} onChange={setConditions}  />
               <TagInput label="Medications" items={medications} suggestions={COMMON_MEDS}       onChange={setMedications} />
@@ -195,14 +198,14 @@ export default function MedicalPage() {
             </div>
 
             {/* Emergency contacts */}
-            <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
-              <p style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 12, color: "#475569", letterSpacing: "0.08em", textTransform: "uppercase" }}>Emergency Contacts</p>
+            <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 20, padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
+              <p style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12, color: "var(--text-2)", letterSpacing: "0.08em", textTransform: "uppercase" }}>Emergency Contacts</p>
               {[
                 { label: "Primary Contact", name: ec1Name, phone: ec1Phone, rel: ec1Rel, setName: setEc1Name, setPhone: setEc1Phone, setRel: setEc1Rel },
                 { label: "Secondary Contact", name: ec2Name, phone: ec2Phone, rel: ec2Rel, setName: setEc2Name, setPhone: setEc2Phone, setRel: setEc2Rel },
               ].map((c, i) => (
-                <div key={i} style={i > 0 ? { paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.04)" } : {}}>
-                  <p style={{ fontSize: 11, fontWeight: 700, color: "#334155", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.07em" }}>{c.label}</p>
+                <div key={i} style={i > 0 ? { paddingTop: 14, borderTop: "1px solid var(--border)" } : {}}>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: "var(--text-3)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.07em" }}>{c.label}</p>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     <input value={c.name}  onChange={e => c.setName(e.target.value)}  placeholder="Full name"          className="cc-input" />
                     <input value={c.phone} onChange={e => c.setPhone(e.target.value)} placeholder="+254 700 000 000"  type="tel"  className="cc-input" />
@@ -213,8 +216,8 @@ export default function MedicalPage() {
             </div>
 
             {/* Insurance */}
-            <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-              <p style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 12, color: "#475569", letterSpacing: "0.08em", textTransform: "uppercase" }}>Insurance</p>
+            <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 20, padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+              <p style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12, color: "var(--text-2)", letterSpacing: "0.08em", textTransform: "uppercase" }}>Insurance</p>
               <input value={insurance} onChange={e => setInsurance(e.target.value)} placeholder="Insurance provider (optional)" className="cc-input" />
               <input value={insNum}    onChange={e => setInsNum(e.target.value)}    placeholder="Policy number (optional)"     className="cc-input" />
             </div>

@@ -127,17 +127,13 @@ export default function GoldShopPage() {
   const ownedIds = new Set(purchases.map(p => p.item_id))
 
   return (
-    <div className="min-h-screen pb-20" style={{ background: "#0f172a" }}>
-      <header style={{ background: "linear-gradient(135deg, #0f172a, #1a0d2e)", borderBottom: "1px solid rgba(245,158,11,0.2)" }}
-        className="text-white px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">⚔️</span>
-          <div>
-            <p className="font-bold text-base" style={{ color: "#f59e0b" }}>The Armory</p>
-            <p className="text-xs" style={{ color: "rgba(245,158,11,0.5)" }}>Gold Shop</p>
-          </div>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", paddingBottom: 72 }}>
+      <header style={{ background: "#1B5E35", padding: "16px 18px", display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ fontFamily: "serif", fontSize: 22, color: "#fff" }}>⚔</span>
+        <div>
+          <h1 style={{ fontFamily: "var(--font-display)", fontSize: 22, color: "#fff", letterSpacing: "0.04em" }}>THE ARMORY</h1>
+          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", marginTop: 1 }}>Gold Shop</p>
         </div>
-        <button onClick={handleSignOut} className="text-sm hover:text-white" style={{ color: "rgba(245,158,11,0.5)" }}>Sign out</button>
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-6 space-y-5">
@@ -156,20 +152,20 @@ export default function GoldShopPage() {
                 <p className="text-xs" style={{ color: "rgba(245,158,11,0.6)" }}>Gold balance</p>
               </div>
               <div className="ml-auto text-right">
-                <p className="font-bold text-white">{gp?.streak_shields ?? 0}</p>
-                <p className="text-xs" style={{ color: "rgba(245,158,11,0.6)" }}>🛡 Shields</p>
+                <p style={{ fontWeight: 700, fontSize: 18, color: "#B45309" }}>{gp?.streak_shields ?? 0}</p>
+                <p className="text-xs" style={{ color: "rgba(180,83,9,0.7)" }}>🛡 Shields</p>
               </div>
             </div>
 
             {/* Tabs */}
-            <div className="flex rounded-xl p-1" style={{ background: "rgba(255,255,255,0.05)" }}>
+            <div style={{ display: "flex", background: "#fff", borderRadius: 12, padding: 4, border: "1px solid var(--border)", gap: 2 }}>
               {(["shop","history"] as const).map(t => (
                 <button key={t} onClick={() => setTab(t)}
                   className="flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors"
                   style={{
-                    background: tab === t ? "rgba(245,158,11,0.15)" : "transparent",
-                    color: tab === t ? "#f59e0b" : "rgba(255,255,255,0.35)",
-                    border: tab === t ? "1px solid rgba(245,158,11,0.3)" : "1px solid transparent",
+                    background: tab === t ? "#1B5E35" : "transparent",
+                    color: tab === t ? "#fff" : "var(--text-2)",
+                    border: "none",
                   }}>
                   {t === "shop" ? "⚔️ Armory" : "📋 History"}
                 </button>
@@ -179,10 +175,10 @@ export default function GoldShopPage() {
             {/* Shop */}
             {tab === "shop" && (
               items.length === 0 ? (
-                <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: 48, textAlign: "center" }}>
+                <div className="cc-card" style={{ padding: 40, textAlign: "center" }}>
                   <span style={{ fontSize: 40 }}>🛒</span>
-                  <p style={{ fontFamily: "var(--cc-font-display)", color: "#64748B", fontWeight: 600, marginTop: 12 }}>Shop is empty</p>
-                  <p style={{ fontSize: 12, color: "#334155", marginTop: 6 }}>Items will appear here once they are added.</p>
+                  <p style={{ fontFamily: "var(--font-display)", color: "var(--text-2)", fontWeight: 600, marginTop: 12, fontSize: 16 }}>SHOP IS EMPTY</p>
+                  <p style={{ fontSize: 12, color: "var(--text-3)", marginTop: 6 }}>Items will appear here once they are added.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -191,12 +187,12 @@ export default function GoldShopPage() {
                     const canAfford = (gp?.gold_balance ?? 0) >= item.gold_cost
                     const msg = buyMsg?.id === item.id ? buyMsg : null
                     return (
-                      <div key={item.id} style={{ background: "#0D1224", border: `2px solid ${item.rarity === "legendary" ? "rgba(245,158,11,0.4)" : item.rarity === "rare" ? "rgba(129,140,248,0.3)" : item.rarity === "epic" ? "rgba(168,85,247,0.3)" : "rgba(255,255,255,0.08)"}`, borderRadius: 20, padding: 16 }}>
+                      <div key={item.id} className="cc-card" style={{ padding: 14, borderLeft: `3px solid ${item.rarity === "legendary" ? "#B45309" : item.rarity === "rare" ? "#1B5E35" : item.rarity === "epic" ? "#7C3AED" : "#E5E7EB"}` }}>
                         <div className="flex items-start gap-3">
                           <span className="text-3xl flex-shrink-0">{item.icon_emoji ?? "📦"}</span>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <p style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 14, color: "#F1F5F9" }}>{item.name}</p>
+                              <p style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 14, color: "var(--text)" }}>{item.name}</p>
                               {item.rarity && item.rarity !== "common" && (
                                 <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">{item.rarity}</span>
                               )}
@@ -210,7 +206,7 @@ export default function GoldShopPage() {
                             <button
                               onClick={() => handleBuy(item)}
                               disabled={!canAfford || owned || buying === item.id}
-                              style={{ marginTop: 6, fontSize: 11, fontWeight: 700, padding: "5px 12px", borderRadius: 10, border: "none", cursor: (owned || !canAfford) ? "not-allowed" : "pointer", background: (owned || !canAfford) ? "rgba(255,255,255,0.06)" : "#F59E0B", color: (owned || !canAfford) ? "#334155" : "#fff", opacity: buying === item.id ? 0.6 : 1 }}
+                              style={{ marginTop: 6, fontSize: 11, fontWeight: 700, padding: "5px 12px", borderRadius: 10, border: "none", cursor: (owned || !canAfford) ? "not-allowed" : "pointer", background: (owned || !canAfford) ? "var(--surface-2)" : "#1B5E35", color: (owned || !canAfford) ? "var(--text-3)" : "#fff", opacity: buying === item.id ? 0.6 : 1 }}
                             >
                               {buying === item.id ? "…" : owned ? "Owned" : !canAfford ? "Need more 🪙" : "Buy"}
                             </button>
@@ -229,11 +225,11 @@ export default function GoldShopPage() {
             {/* History */}
             {tab === "history" && (
               txHistory.length === 0 ? (
-                <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: 40, textAlign: "center" }}>
-                  <p style={{ color: "#475569", fontSize: 13 }}>No transactions yet</p>
+                <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 20, padding: 40, textAlign: "center" }}>
+                  <p style={{ color: "var(--text-2)", fontSize: 13 }}>No transactions yet</p>
                 </div>
               ) : (
-                <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, overflow: "hidden" }}>
+                <div className="cc-card" style={{ overflow: "hidden" }}>
                   {txHistory.map((tx, i) => (
                     <div key={i} className={`flex items-center justify-between px-4 py-3 ${i < txHistory.length - 1 ? "border-b border-stone-50" : ""}`}>
                       <div className="min-w-0">

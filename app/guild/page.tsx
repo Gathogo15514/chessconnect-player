@@ -109,79 +109,64 @@ export default function GuildPage() {
   const myRank = guild?.members.findIndex(m => m.player_id === myId) ?? -1
 
   return (
-    <div className="min-h-screen pb-20" style={{ background: "#0f172a" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", paddingBottom: 72 }}>
+      <style>{`@keyframes cc-spin{to{transform:rotate(360deg)}}`}</style>
+
       {/* Header */}
-      <header style={{ background: "linear-gradient(135deg, #0f172a, #1e1b4b)", borderBottom: "1px solid rgba(59,130,246,0.2)" }}
-        className="px-4 py-3 flex items-center gap-3">
-        <span className="text-2xl">{guild?.emoji ?? "⚔️"}</span>
-        <div className="flex-1 min-w-0">
-          <p className="font-bold text-white truncate">{guild?.name ?? "Guild"}</p>
-          <p className="text-xs" style={{ color: "rgba(59,130,246,0.6)" }}>
-            {guild ? `${guild.members.length} members · ${guild.total_xp.toLocaleString()} XP combined` : "Loading…"}
+      <header style={{ background: "#1B5E35", padding: "16px 18px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+        <span style={{ fontSize: 22 }}>{guild?.emoji ?? "🏰"}</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h1 style={{ fontFamily: "var(--font-display)", fontSize: 22, color: "#fff", letterSpacing: "0.04em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {guild?.name?.toUpperCase() ?? "GUILD"}
+          </h1>
+          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", marginTop: 1 }}>
+            {guild ? `${guild.members.length} members · ${guild.total_xp.toLocaleString()} XP` : "Loading…"}
           </p>
         </div>
         {myRank >= 0 && (
-          <span className="text-xs font-bold px-2 py-1 rounded-lg"
-            style={{ background: "rgba(59,130,246,0.15)", border: "1px solid rgba(59,130,246,0.3)", color: "#93c5fd" }}>
+          <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 10px", borderRadius: 99, background: "rgba(255,255,255,0.15)", color: "#fff" }}>
             #{myRank + 1}
           </span>
         )}
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-5 space-y-4">
+      <main style={{ maxWidth: 480, margin: "0 auto", padding: "16px 16px 0", display: "flex", flexDirection: "column", gap: 12 }}>
         {loading ? (
-          <div className="flex justify-center py-24">
-            <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin"
-              style={{ borderColor: "#3b82f6", borderTopColor: "transparent" }} />
+          <div style={{ display: "flex", justifyContent: "center", paddingTop: 60 }}>
+            <div style={{ width: 32, height: 32, border: "3px solid #1B5E35", borderTopColor: "transparent", borderRadius: "50%", animation: "cc-spin 0.8s linear infinite" }} />
           </div>
         ) : !guild ? (
-          <div className="text-center py-20">
-            <span className="text-6xl">🏰</span>
-            <p className="mt-4 font-bold" style={{ color: "#93c5fd" }}>No Guild Yet</p>
-            <p className="text-sm mt-2" style={{ color: "rgba(147,197,253,0.5)" }}>
-              Join a school or club to be part of a guild.
-            </p>
-            <a href="/join-coach"
-              className="mt-4 inline-block px-5 py-2 rounded-xl text-sm font-bold"
-              style={{ background: "rgba(59,130,246,0.2)", border: "1px solid rgba(59,130,246,0.4)", color: "#93c5fd" }}>
+          <div className="cc-card" style={{ padding: 40, textAlign: "center" }}>
+            <span style={{ fontSize: 40 }}>🏰</span>
+            <p style={{ fontWeight: 700, fontSize: 16, color: "var(--text-2)", marginTop: 12 }}>No Guild Yet</p>
+            <p style={{ fontSize: 13, color: "var(--text-3)", marginTop: 6 }}>Join a school or club to be part of a guild.</p>
+            <a href="/join-coach" className="cc-btn-primary" style={{ marginTop: 16, display: "inline-flex", width: "auto", padding: "10px 20px", borderRadius: 10, textDecoration: "none" }}>
               Join a Coach →
             </a>
           </div>
         ) : (
           <>
-            {/* Guild XP bar */}
-            <div style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)", borderRadius: 16 }}
-              className="p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <div>
-                  <p className="font-bold text-white">{guild.name}</p>
-                  <p className="text-xs" style={{ color: "rgba(59,130,246,0.7)" }}>
-                    {guild.type === "school" ? "School Guild" : "Club Guild"} · {guild.members.length} warriors
-                  </p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div style={{ background: "rgba(59,130,246,0.1)", borderRadius: 12 }} className="p-3 text-center">
-                  <p className="text-xl font-black" style={{ color: "#60a5fa" }}>{guild.total_xp.toLocaleString()}</p>
-                  <p className="text-[10px] uppercase tracking-wide" style={{ color: "rgba(96,165,250,0.6)" }}>Guild XP</p>
-                </div>
-                <div style={{ background: "rgba(59,130,246,0.1)", borderRadius: 12 }} className="p-3 text-center">
-                  <p className="text-xl font-black" style={{ color: "#60a5fa" }}>{guild.members.length}</p>
-                  <p className="text-[10px] uppercase tracking-wide" style={{ color: "rgba(96,165,250,0.6)" }}>Members</p>
-                </div>
+            {/* Guild stats */}
+            <div className="cc-card" style={{ padding: "16px 18px" }}>
+              <p style={{ fontWeight: 700, fontSize: 15, color: "var(--text)", marginBottom: 12 }}>{guild.name}</p>
+              <p style={{ fontSize: 12, color: "var(--text-3)", marginBottom: 12 }}>{guild.type === "school" ? "School Guild" : "Club Guild"} · {guild.members.length} warriors</p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                {[
+                  { label: "Guild XP", value: guild.total_xp.toLocaleString() },
+                  { label: "Members",  value: String(guild.members.length) },
+                ].map(s => (
+                  <div key={s.label} style={{ background: "var(--green-bg)", borderRadius: 10, padding: "12px 14px", textAlign: "center" }}>
+                    <p style={{ fontFamily: "var(--font-display)", fontSize: 22, color: "var(--green)", lineHeight: 1 }}>{s.value}</p>
+                    <p style={{ fontSize: 11, color: "var(--text-3)", marginTop: 4, fontWeight: 500 }}>{s.label}</p>
+                  </div>
+                ))}
               </div>
             </div>
 
             {/* Tabs */}
-            <div className="flex rounded-xl p-1" style={{ background: "rgba(255,255,255,0.05)" }}>
+            <div style={{ display: "flex", background: "#fff", borderRadius: 12, padding: 4, border: "1px solid var(--border)", gap: 2 }}>
               {(["leaderboard","info"] as const).map(t => (
-                <button key={t} onClick={() => setTab(t)}
-                  className="flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors capitalize"
-                  style={{
-                    background: tab === t ? "rgba(59,130,246,0.2)" : "transparent",
-                    color: tab === t ? "#60a5fa" : "rgba(255,255,255,0.3)",
-                    border: tab === t ? "1px solid rgba(59,130,246,0.35)" : "1px solid transparent",
-                  }}>
+                <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: "8px 4px", borderRadius: 9, border: "none", fontSize: 12, fontWeight: tab===t?700:500, background: tab===t?"#1B5E35":"transparent", color: tab===t?"#fff":"var(--text-2)", cursor: "pointer", transition: "all 0.15s" }}>
                   {t === "leaderboard" ? "🏆 Leaderboard" : "ℹ️ Info"}
                 </button>
               ))}
@@ -189,47 +174,34 @@ export default function GuildPage() {
 
             {/* Leaderboard */}
             {tab === "leaderboard" && (
-              <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(59,130,246,0.15)", borderRadius: 16, overflow: "hidden" }}>
+              <div className="cc-card" style={{ overflow: "hidden" }}>
                 {guild.members.map((m, i) => {
                   const isMe = m.player_id === myId
                   return (
-                    <div key={m.player_id}
-                      style={{
-                        padding: "14px 16px",
-                        borderBottom: i < guild.members.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none",
-                        background: isMe ? "rgba(59,130,246,0.08)" : "transparent",
-                      }}
-                      className="flex items-center gap-3">
-                      <div style={{ width: 32, textAlign: "center", flexShrink: 0 }}>
-                        {i < 3 ? (
-                          <span className="text-lg">{RANK_MEDALS[i]}</span>
-                        ) : (
-                          <span className="text-sm font-bold" style={{ color: "rgba(255,255,255,0.3)" }}>#{i+1}</span>
-                        )}
+                    <div key={m.player_id} style={{
+                      padding: "12px 16px",
+                      borderBottom: i < guild.members.length - 1 ? "1px solid var(--border)" : "none",
+                      background: isMe ? "var(--green-bg)" : "transparent",
+                      display: "flex", alignItems: "center", gap: 10,
+                    }}>
+                      <div style={{ width: 28, textAlign: "center", flexShrink: 0 }}>
+                        {i < 3
+                          ? <span style={{ fontSize: 16 }}>{RANK_MEDALS[i]}</span>
+                          : <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-3)" }}>#{i+1}</span>
+                        }
                       </div>
-                      {/* Avatar */}
-                      <div style={{
-                        width: 36, height: 36, borderRadius: "50%",
-                        background: isMe ? "rgba(59,130,246,0.3)" : "rgba(255,255,255,0.08)",
-                        border: isMe ? "2px solid rgba(59,130,246,0.6)" : "2px solid rgba(255,255,255,0.1)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 16, flexShrink: 0,
-                      }}>
+                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: isMe ? "var(--green-bg)" : "var(--surface-2)", border: isMe ? "2px solid var(--green)" : "2px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>
                         {i === 0 ? "👑" : i === 1 ? "⚔️" : i === 2 ? "🛡️" : "♟"}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold truncate" style={{ fontSize: 13, color: isMe ? "#93c5fd" : "#e2e8f0" }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 13, fontWeight: 600, color: isMe ? "var(--green)" : "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {m.full_name}{isMe ? " (You)" : ""}
                         </p>
-                        <p style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>
-                          Lv. {m.current_level} · 🔥{m.streak_current}d
-                        </p>
+                        <p style={{ fontSize: 11, color: "var(--text-3)" }}>Lv. {m.current_level} · 🔥{m.streak_current}d</p>
                       </div>
-                      <div className="text-right shrink-0">
-                        <p className="font-bold tabular-nums" style={{ fontSize: 13, color: "#60a5fa" }}>
-                          {m.total_xp.toLocaleString()} XP
-                        </p>
-                        <p style={{ fontSize: 10, color: "rgba(245,158,11,0.6)" }}>{m.gold_balance}🪙</p>
+                      <div style={{ textAlign: "right", flexShrink: 0 }}>
+                        <p style={{ fontSize: 13, fontWeight: 700, color: "var(--green)" }}>{m.total_xp.toLocaleString()} XP</p>
+                        <p style={{ fontSize: 11, color: "var(--text-3)" }}>{m.gold_balance} 🪙</p>
                       </div>
                     </div>
                   )
@@ -239,28 +211,19 @@ export default function GuildPage() {
 
             {/* Info tab */}
             {tab === "info" && (
-              <div className="space-y-3">
-                <div style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.15)", borderRadius: 16, padding: "16px" }}>
-                  <p className="font-bold mb-3" style={{ color: "#93c5fd", fontSize: 13 }}>⚔️ How Guild XP Works</p>
-                  <div className="space-y-2">
-                    {[
-                      "Complete quest nodes to earn XP for your guild",
-                      "Every 🔥 streak day multiplies your contribution",
-                      "Boss defeats give bonus guild XP",
-                      "Top 3 members get weekly gold chest rewards",
-                    ].map((tip, i) => (
-                      <div key={i} className="flex items-start gap-2">
-                        <span style={{ color: "#3b82f6", flexShrink: 0, fontSize: 12 }}>▸</span>
-                        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", lineHeight: 1.4 }}>{tip}</p>
-                      </div>
-                    ))}
-                  </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div className="cc-card" style={{ padding: 16 }}>
+                  <p style={{ fontWeight: 700, fontSize: 14, color: "var(--text)", marginBottom: 10 }}>⚔️ How Guild XP Works</p>
+                  {["Complete quest nodes to earn XP for your guild","Every 🔥 streak day multiplies your contribution","Boss defeats give bonus guild XP","Top 3 members get weekly gold chest rewards"].map((tip, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 7 }}>
+                      <span style={{ color: "var(--green)", flexShrink: 0, fontSize: 12, marginTop: 2 }}>▸</span>
+                      <p style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.5 }}>{tip}</p>
+                    </div>
+                  ))}
                 </div>
-                <div style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: 16, padding: "16px" }}>
-                  <p className="font-bold mb-2" style={{ color: "#fbbf24", fontSize: 13 }}>🏆 Weekly Chest</p>
-                  <p style={{ fontSize: 12, color: "rgba(255,255,255,0.45)" }}>
-                    The top 3 guild members each week share a gold chest. Keep grinding to claim your share!
-                  </p>
+                <div className="cc-card" style={{ padding: 16 }}>
+                  <p style={{ fontWeight: 700, fontSize: 14, color: "var(--text)", marginBottom: 8 }}>🏆 Weekly Chest</p>
+                  <p style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.5 }}>The top 3 guild members each week share a gold chest. Keep grinding to claim your share!</p>
                 </div>
               </div>
             )}

@@ -304,30 +304,29 @@ export default function ProfilePage() {
                 <div style={{ padding: 12, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                   {AVATARS.map(a => {
                     const selected = avatarId === a.id
-                    return (
-                      <button
+                    return (<button
                         key={a.id} type="button"
                         onClick={() => setAvatarId(a.id)}
                         style={{
-                          borderRadius: 14, padding: "10px 12px",
-                          background:  selected ? `${a.color}14` : "rgba(255,255,255,0.03)",
-                          border:      `2px solid ${selected ? a.color : "rgba(255,255,255,0.07)"}`,
-                          boxShadow:   selected ? `0 0 14px ${a.glow ?? a.color + "30"}` : "none",
+                          borderRadius: 12, padding: "10px 12px",
+                          background:  selected ? `${a.color}10` : "var(--surface-2)",
+                          border:      selected ? `2px solid ${a.color}` : "2px solid var(--border)",
+                          boxShadow:   selected ? `0 2px 8px ${a.color}30` : "none",
                           cursor: "pointer", textAlign: "left", transition: "all 0.15s",
                         }}
                       >
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                          <span style={{ fontSize: 22 }}>{a.emoji}</span>
+                          <span style={{ fontSize: 20 }}>{a.emoji}</span>
                           <div>
-                            <p style={{ fontSize: 12, fontWeight: 700, color: selected ? a.color : "#e2e8f0", lineHeight: 1.2, fontFamily: "var(--cc-font-display)" }}>
+                            <p style={{ fontSize: 12, fontWeight: 700, color: selected ? a.color : "var(--text)", lineHeight: 1.2 }}>
                               {a.name}
                             </p>
-                            <p style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{a.class}</p>
+                            <p style={{ fontSize: 10, color: "var(--text-3)" }}>{a.class}</p>
                           </div>
                         </div>
-                        <p style={{ fontSize: 10, color: "rgba(255,255,255,0.28)", lineHeight: 1.3 }}>{a.description}</p>
+                        <p style={{ fontSize: 10, color: "var(--text-3)", lineHeight: 1.3 }}>{a.description}</p>
                         {a.unlockLevel > 1 && (
-                          <p style={{ fontSize: 9, color: a.color, marginTop: 3, opacity: 0.7, fontFamily: "var(--cc-font-display)" }}>
+                          <p style={{ fontSize: 9, color: "var(--green)", marginTop: 3, fontWeight: 600 }}>
                             Lv. {a.unlockLevel}+
                           </p>
                         )}
@@ -339,17 +338,17 @@ export default function ProfilePage() {
                 <div style={{
                   margin: "0 12px 12px",
                   padding: "10px 14px",
-                  background: `${av.color}0D`,
-                  border: `1px solid ${av.color}20`,
-                  borderRadius: 12,
+                  background: "var(--green-bg)",
+                  border: "1px solid var(--green-mid)",
+                  borderRadius: 10,
                   display: "flex", alignItems: "center", gap: 10,
                 }}>
-                  <span style={{ fontSize: 26 }}>{av.emoji}</span>
+                  <span style={{ fontSize: 24 }}>{av.emoji}</span>
                   <div>
-                    <p style={{ fontSize: 13, fontWeight: 700, color: av.color, fontFamily: "var(--cc-font-display)" }}>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: "var(--green)" }}>
                       {av.name}
                     </p>
-                    <p style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{av.class} · {av.description}</p>
+                    <p style={{ fontSize: 11, color: "var(--text-3)" }}>{av.class} · {av.description}</p>
                   </div>
                 </div>
               </div>

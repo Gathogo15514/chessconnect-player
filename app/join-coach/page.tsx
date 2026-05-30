@@ -104,10 +104,10 @@ export default function JoinCoachPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#070B17", paddingBottom: 80 }}>
-      <header style={{ padding: "18px 16px 14px", background: "linear-gradient(180deg, #0D1224 0%, transparent 100%)", display: "flex", alignItems: "center", gap: 10, position: "sticky", top: 0, zIndex: 40 }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", paddingBottom: 72 }}>
+      <header style={{ background: "#1B5E35", padding: "16px 18px", display: "flex", alignItems: "center", gap: 10 }}>
         <span style={{ fontSize: 22 }}>👨‍🏫</span>
-        <span style={{ fontFamily: "var(--cc-font-display)", fontWeight: 800, fontSize: 19, color: "#F1F5F9", letterSpacing: "0.02em" }}>Join a Coach</span>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: 22, color: "#fff", letterSpacing: "0.04em" }}>JOIN A COACH</h1>
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-4 space-y-4">
@@ -125,20 +125,20 @@ export default function JoinCoachPage() {
           <>
             {/* Current coaches */}
             {links.length > 0 && (
-              <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, overflow: "hidden" }}>
-                <div style={{ padding: "13px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                  <p style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 13, color: "#F1F5F9" }}>My Coaches</p>
+              <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 20, overflow: "hidden" }}>
+                <div style={{ padding: "13px 16px", borderBottom: "1px solid var(--border)" }}>
+                  <p style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, color: "var(--text)" }}>MY COACHES</p>
                 </div>
                 {links.map((l, i) => (
-                  <div key={l.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: i < links.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none" }}>
-                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
+                  <div key={l.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: i < links.length - 1 ? "1px solid var(--border)" : "none" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--green-bg)", border: "1px solid var(--green-mid)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
                       👨‍🏫
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 13, fontWeight: 600, color: "#F1F5F9", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {l.coaches?.profiles?.full_name ?? "Coach"}
                       </p>
-                      <p style={{ fontSize: 11, color: "#475569", marginTop: 2 }}>
+                      <p style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2 }}>
                         Via {l.linked_via ?? "direct"} · {new Date(l.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                       </p>
                     </div>
@@ -151,10 +151,10 @@ export default function JoinCoachPage() {
             )}
 
             {/* Join by invite code */}
-            <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 20, padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
               <div>
-                <p style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, color: "#F1F5F9", fontSize: 15 }}>Enter Invite Code</p>
-                <p style={{ fontSize: 12, color: "#475569", marginTop: 4 }}>Ask your coach for their invite code — it looks like GUILD-KNIGHT-402.</p>
+                <p style={{ fontFamily: "var(--font-display)", fontWeight: 700, color: "var(--text)", fontSize: 15 }}>ENTER INVITE CODE</p>
+                <p style={{ fontSize: 12, color: "var(--text-2)", marginTop: 4 }}>Ask your coach for their invite code — it looks like GUILD-KNIGHT-402.</p>
               </div>
 
               <input
@@ -172,7 +172,7 @@ export default function JoinCoachPage() {
               <button
                 onClick={handleJoin}
                 disabled={joining || !code.trim()}
-                style={{ width: "100%", padding: "12px", background: "linear-gradient(135deg, #0D8A5C, #10B981)", border: "none", borderRadius: 14, fontFamily: "var(--cc-font-display)", fontSize: 14, fontWeight: 800, color: "#fff", cursor: "pointer", opacity: (joining || !code.trim()) ? 0.4 : 1, boxShadow: "0 4px 16px rgba(16,185,129,0.25)" }}
+                style={{ width: "100%", padding: "12px", background: "#1B5E35", border: "none", borderRadius: 14, fontFamily: "var(--font-display)", fontSize: 14, fontWeight: 800, color: "#fff", cursor: "pointer", opacity: (joining || !code.trim()) ? 0.4 : 1, letterSpacing: "0.04em" }}
               >
                 {joining ? "Connecting…" : "Join Coach"}
               </button>
@@ -185,10 +185,10 @@ export default function JoinCoachPage() {
             </div>
 
             {links.length === 0 && (
-              <div style={{ background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.08)", borderRadius: 20, padding: 32, textAlign: "center" }}>
+              <div style={{ background: "var(--surface-2)", border: "1px dashed var(--border-med)", borderRadius: 20, padding: 32, textAlign: "center" }}>
                 <span style={{ fontSize: 40 }}>👨‍🏫</span>
-                <p style={{ fontFamily: "var(--cc-font-display)", color: "#475569", fontWeight: 600, marginTop: 12 }}>No coaches yet</p>
-                <p style={{ fontSize: 12, color: "#334155", marginTop: 6 }}>Enter your coach's invite code above to connect.</p>
+                <p style={{ fontFamily: "var(--font-display)", color: "var(--text-2)", fontWeight: 600, marginTop: 12, fontSize: 15 }}>NO COACHES YET</p>
+                <p style={{ fontSize: 12, color: "var(--text-3)", marginTop: 6 }}>Enter your coach's invite code above to connect.</p>
               </div>
             )}
           </>

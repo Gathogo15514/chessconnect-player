@@ -129,10 +129,13 @@ export default function PerformancePage() {
     ? Math.round((stats.wins / stats.totalGames) * 100) : null
 
   return (
-    <div style={{ minHeight: "100vh", background: "#070B17", paddingBottom: 80 }}>
-      <header style={{ padding: "18px 16px 14px", background: "linear-gradient(180deg, #0D1224 0%, transparent 100%)", display: "flex", alignItems: "center", gap: 10, position: "sticky", top: 0, zIndex: 40 }}>
-        <span style={{ fontSize: 22, filter: "drop-shadow(0 0 8px #10B981)" }}>📈</span>
-        <span style={{ fontFamily: "var(--cc-font-display)", fontWeight: 800, fontSize: 19, color: "#F1F5F9", letterSpacing: "0.02em" }}>Performance</span>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", paddingBottom: 72 }}>
+      <header style={{ padding: "16px 18px", background: "#1B5E35", display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ fontSize: 22 }}>📈</span>
+        <div>
+          <h1 style={{ fontFamily: "var(--font-display)", fontSize: 22, color: "#fff", letterSpacing: "0.04em" }}>PERFORMANCE</h1>
+          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", marginTop: 1 }}>Lichess stats &amp; rating history</p>
+        </div>
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-4 space-y-4">
@@ -144,9 +147,9 @@ export default function PerformancePage() {
           <>
             {/* Rating history (ChessConnect) */}
             {ratingHistory.length > 0 && (
-              <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, overflow: "hidden" }}>
-                <div style={{ padding: "13px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                  <h2 style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 13, color: "#F1F5F9" }}>Rating History (ChessConnect)</h2>
+              <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 20, overflow: "hidden" }}>
+                <div style={{ padding: "13px 16px", borderBottom: "1px solid var(--border)" }}>
+                  <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, color: "var(--text)" }}>Rating History (ChessConnect)</h2>
                 </div>
                 <div className="px-4 py-4">
                   <div className="flex items-end gap-1.5 h-20">
@@ -163,7 +166,7 @@ export default function PerformancePage() {
                           <span className={`text-[8px] font-bold ${delta !== null ? (delta >= 0 ? "text-emerald-600" : "text-red-500") : "text-transparent"}`}>
                             {delta !== null ? (delta >= 0 ? `+${delta}` : `${delta}`) : "·"}
                           </span>
-                          <div style={{ height: h }} className={`w-full rounded-t ${isLatest ? "bg-green-900" : "bg-stone-200"}`} />
+                          <div style={{ height: h, width: "100%", borderRadius: "3px 3px 0 0", background: isLatest ? "#1B5E35" : "#E5E7EB" }} />
                           <span className={`text-[8px] font-bold ${isLatest ? "text-stone-800" : "text-stone-400"}`}>{e.rating}</span>
                         </div>
                       )
@@ -174,8 +177,8 @@ export default function PerformancePage() {
             )}
 
             {/* Lichess username input */}
-            <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: 16 }}>
-              <h2 className="font-bold text-stone-800 mb-3">Lichess Profile</h2>
+            <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 20, padding: 16 }}>
+              <h2 style={{ fontFamily: "var(--font-display)", fontSize: 13, fontWeight: 700, color: "var(--text)", marginBottom: 12 }}>LICHESS PROFILE</h2>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -205,27 +208,27 @@ export default function PerformancePage() {
             ) : stats ? (
               <>
                 {/* Win/loss/draw */}
-                <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, overflow: "hidden" }}>
-                  <div className="px-4 py-3 border-b border-stone-100 flex items-center justify-between">
+                <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 20, overflow: "hidden" }}>
+                  <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <div>
-                      <h2 style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 13, color: "#F1F5F9" }}>{stats.username}</h2>
-                      {stats.title && <span className="text-xs font-bold text-amber-600">{stats.title}</span>}
+                      <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 15, color: "var(--text)" }}>{stats.username}</h2>
+                      {stats.title && <span style={{ fontSize: 11, fontWeight: 700, color: "var(--gold)" }}>{stats.title}</span>}
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className={`w-2 h-2 rounded-full ${stats.online ? "bg-emerald-500" : "bg-stone-300"}`} />
-                      <span style={{ fontSize: 11, color: "#475569" }}>{stats.online ? "Online" : "Offline"}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: stats.online ? "#16A34A" : "#D1D5DB" }} />
+                      <span style={{ fontSize: 11, color: "var(--text-2)" }}>{stats.online ? "Online" : "Offline"}</span>
                     </div>
                   </div>
-                  <div className="grid grid-cols-4 divide-x divide-stone-100">
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", borderBottom: "1px solid var(--border)" }}>
                     {[
-                      { label: "Games",  value: stats.totalGames.toLocaleString(), color: "text-stone-800" },
-                      { label: "Wins",   value: stats.wins.toLocaleString(),       color: "text-emerald-600" },
-                      { label: "Losses", value: stats.losses.toLocaleString(),     color: "text-red-500"     },
-                      { label: "Win %",  value: winRate !== null ? `${winRate}%` : "—", color: "text-blue-600" },
+                      { label: "Games",  value: stats.totalGames.toLocaleString(), color: "var(--text)"    },
+                      { label: "Wins",   value: stats.wins.toLocaleString(),       color: "#16A34A"        },
+                      { label: "Losses", value: stats.losses.toLocaleString(),     color: "var(--red)"     },
+                      { label: "Win %",  value: winRate !== null ? `${winRate}%` : "—", color: "var(--blue)" },
                     ].map((s, i) => (
-                      <div key={i} className="px-3 py-3 text-center">
-                        <p className={`text-base font-bold ${s.color}`}>{s.value}</p>
-                        <p className="text-[10px] text-stone-400 font-medium">{s.label}</p>
+                      <div key={i} style={{ padding: "12px 8px", textAlign: "center", borderRight: i < 3 ? "1px solid var(--border)" : "none" }}>
+                        <p style={{ fontSize: 15, fontWeight: 700, color: s.color }}>{s.value}</p>
+                        <p style={{ fontSize: 10, color: "var(--text-3)", fontWeight: 500, marginTop: 2 }}>{s.label}</p>
                       </div>
                     ))}
                   </div>
@@ -233,22 +236,22 @@ export default function PerformancePage() {
 
                 {/* Ratings by format */}
                 {Object.keys(stats.ratings).length > 0 && (
-                  <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, overflow: "hidden" }}>
-                    <div style={{ padding: "13px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                      <h2 style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 13, color: "#F1F5F9" }}>Ratings by Format</h2>
+                  <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 20, overflow: "hidden" }}>
+                    <div style={{ padding: "13px 16px", borderBottom: "1px solid var(--border)" }}>
+                      <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, color: "var(--text)" }}>RATINGS BY FORMAT</h2>
                     </div>
                     {Object.entries(stats.ratings)
                       .sort((a, b) => b[1].games - a[1].games)
                       .map(([key, r], i, arr) => (
-                        <div key={key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 16px", borderBottom: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none" }}>
+                        <div key={key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 16px", borderBottom: i < arr.length - 1 ? "1px solid var(--border)" : "none" }}>
                           <div>
-                            <p style={{ fontSize: 13, fontWeight: 600, color: "#94A3B8" }}>{FORMAT_LABEL[key] ?? key}</p>
-                            <p style={{ fontSize: 11, color: "#475569" }}>{r.games.toLocaleString()} games</p>
+                            <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{FORMAT_LABEL[key] ?? key}</p>
+                            <p style={{ fontSize: 11, color: "var(--text-3)" }}>{r.games.toLocaleString()} games</p>
                           </div>
-                          <div className="text-right">
-                            <p style={{ fontSize: 18, fontWeight: 800, color: "#F1F5F9", fontFamily: "var(--cc-font-display)" }}>{r.rating}</p>
+                          <div style={{ textAlign: "right" }}>
+                            <p style={{ fontSize: 18, fontWeight: 800, color: "var(--green)", fontFamily: "var(--font-display)" }}>{r.rating}</p>
                             {r.prog !== undefined && r.prog !== 0 && (
-                              <p className={`text-xs font-bold ${r.prog > 0 ? "text-emerald-600" : "text-red-500"}`}>
+                              <p style={{ fontSize: 11, fontWeight: 700, color: r.prog > 0 ? "#16A34A" : "var(--red)" }}>
                                 {r.prog > 0 ? "+" : ""}{r.prog}
                               </p>
                             )}
@@ -259,10 +262,10 @@ export default function PerformancePage() {
                 )}
               </>
             ) : lichessUser ? null : (
-              <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: 32, textAlign: "center" }}>
+              <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 20, padding: 32, textAlign: "center" }}>
                 <span style={{ fontSize: 40 }}>⚡</span>
-                <p style={{ fontFamily: "var(--cc-font-display)", color: "#64748B", fontWeight: 600, marginTop: 12 }}>No Lichess account linked</p>
-                <p style={{ fontSize: 12, color: "#334155", marginTop: 6 }}>Enter your Lichess username above to see your online stats.</p>
+                <p style={{ fontFamily: "var(--font-display)", color: "var(--text-2)", fontWeight: 600, marginTop: 12, fontSize: 16 }}>NO LICHESS ACCOUNT LINKED</p>
+                <p style={{ fontSize: 12, color: "var(--text-3)", marginTop: 6 }}>Enter your Lichess username above to see your online stats.</p>
               </div>
             )}
           </>
