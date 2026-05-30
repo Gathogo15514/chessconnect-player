@@ -6,11 +6,11 @@ import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 
 const TABS = [
-  { href: "/dashboard", icon: "♜",  label: "Home",    color: "#10B981" },
-  { href: "/quests",    icon: "⚔️", label: "Quests",  color: "#F59E0B" },
-  { href: "/guild",     icon: "🏰", label: "Guild",   color: "#60A5FA" },
-  { href: "/progress",  icon: "⚡", label: "XP",      color: "#818CF8" },
-  { href: "/profile",   icon: "👤", label: "Profile", color: "#94A3B8" },
+  { href: "/dashboard", symbol: "♟", label: "HOME",      color: "#E8C547" },
+  { href: "/quests",    symbol: "⚔",  label: "QUESTS",    color: "#FB923C" },
+  { href: "/guild",     symbol: "♜",  label: "GUILD",     color: "#60A5FA" },
+  { href: "/progress",  symbol: "♛",  label: "XP",        color: "#A78BFA" },
+  { href: "/profile",   symbol: "♚",  label: "PROFILE",   color: "#E8C547" },
 ]
 
 export function BottomNav() {
@@ -25,15 +25,12 @@ export function BottomNav() {
       const { data: player } = await (supabase.from("players") as any)
         .select("id").eq("profile_id", session.user.id).maybeSingle()
       if (!player) return
-
       const [srRes, assignRes] = await Promise.all([
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (supabase.from("sr_queue") as any)
-          .select("id").eq("player_id", player.id).eq("is_active", true)
+        (supabase.from("sr_queue") as any).select("id").eq("player_id", player.id).eq("is_active", true)
           .lte("due_date", new Date().toISOString().slice(0, 10)),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (supabase.from("quest_assignments") as any)
-          .select("id").eq("player_id", player.id).eq("status", "active"),
+        (supabase.from("quest_assignments") as any).select("id").eq("player_id", player.id).eq("status", "active"),
       ])
       setQuestBadge((srRes.data ?? []).length + (assignRes.data ?? []).length)
     })
@@ -42,12 +39,12 @@ export function BottomNav() {
   return (
     <nav style={{
       position: "fixed", bottom: 0, left: 0, right: 0,
-      height: "calc(60px + env(safe-area-inset-bottom, 0px))",
+      height: "calc(58px + env(safe-area-inset-bottom, 0px))",
       paddingBottom: "env(safe-area-inset-bottom, 0px)",
-      background: "rgba(7,11,23,0.97)",
-      borderTop: "1px solid rgba(255,255,255,0.07)",
-      backdropFilter: "blur(24px)",
-      WebkitBackdropFilter: "blur(24px)",
+      background: "rgba(9,9,11,0.97)",
+      borderTop: "1px solid rgba(232,197,71,0.12)",
+      backdropFilter: "blur(28px)",
+      WebkitBackdropFilter: "blur(28px)",
       display: "flex",
       zIndex: 50,
     }}>
@@ -56,43 +53,43 @@ export function BottomNav() {
         const badge  = t.href === "/quests" ? questBadge : 0
         return (
           <Link key={t.href} href={t.href} className="cc-nav-tab" style={{
-            flex: 1,
-            display: "flex", flexDirection: "column",
+            flex: 1, display: "flex", flexDirection: "column",
             alignItems: "center", justifyContent: "center",
-            gap: 3, textDecoration: "none",
-            paddingTop: 8, position: "relative",
+            gap: 2, textDecoration: "none", paddingTop: 6,
+            position: "relative",
           }}>
-            {/* Active top indicator */}
+            {/* Gold top bar */}
             {active && (
               <span style={{
                 position: "absolute", top: 0, left: "50%",
                 transform: "translateX(-50%)",
-                width: 28, height: 3,
+                width: 24, height: 2.5,
                 background: t.color,
-                borderRadius: "0 0 4px 4px",
-                boxShadow: `0 0 10px ${t.color}80`,
+                borderRadius: "0 0 3px 3px",
+                boxShadow: `0 2px 10px ${t.color}`,
               }} />
             )}
 
-            {/* Icon */}
+            {/* Chess piece symbol */}
             <span style={{
-              fontSize: 22, lineHeight: 1,
+              fontFamily: "serif",
+              fontSize: 20, lineHeight: 1,
+              color: active ? t.color : "rgba(255,255,255,0.3)",
+              filter: active ? `drop-shadow(0 0 6px ${t.color}80)` : "none",
+              animation: active ? "cc-nav-active 2.5s ease-in-out infinite" : "none",
               position: "relative",
-              filter: active ? `drop-shadow(0 0 7px ${t.color})` : "none",
-              opacity: active ? 1 : 0.38,
-              animation: active ? "cc-nav-glow 2.5s ease-in-out infinite" : "none",
             }}>
-              {t.icon}
+              {t.symbol}
               {badge > 0 && (
                 <span style={{
-                  position: "absolute", top: -5, right: -9,
-                  minWidth: 16, height: 16,
+                  position: "absolute", top: -4, right: -8,
+                  minWidth: 15, height: 15,
                   background: "#EF4444", color: "#fff",
-                  fontSize: 9, fontWeight: 700,
+                  fontSize: 8, fontWeight: 700,
+                  fontFamily: "var(--font-display)",
                   borderRadius: 99,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontFamily: "var(--cc-font-display)",
-                  border: "1.5px solid #070B17",
+                  border: "1.5px solid #09090B",
                 }}>
                   {badge > 9 ? "9+" : badge}
                 </span>
@@ -101,11 +98,9 @@ export function BottomNav() {
 
             {/* Label */}
             <span style={{
-              fontSize: 10,
-              fontWeight: active ? 700 : 500,
-              color: active ? t.color : "rgba(148,163,184,0.45)",
-              fontFamily: "var(--cc-font-display)",
-              letterSpacing: "0.04em",
+              fontFamily: "var(--font-display)",
+              fontSize: 8.5, letterSpacing: "0.1em",
+              color: active ? t.color : "rgba(255,255,255,0.25)",
               lineHeight: 1,
             }}>
               {t.label}

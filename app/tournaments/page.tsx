@@ -108,7 +108,7 @@ export default function TournamentsPage() {
   const visible   = lists[tab] ?? []
 
   return (
-    <div style={{ minHeight: "100vh", background: S.bg, paddingBottom: 80 }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", paddingBottom: 80 }}>
       <style>{`
         @keyframes cc-spin    { to { transform: rotate(360deg); } }
         @keyframes cc-fade-up { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
@@ -116,19 +116,9 @@ export default function TournamentsPage() {
       `}</style>
 
       {/* Header */}
-      <header style={{
-        padding: "18px 16px 14px",
-        background: `linear-gradient(180deg, ${S.surface} 0%, transparent 100%)`,
-        display: "flex", alignItems: "center", gap: 10,
-        position: "sticky", top: 0, zIndex: 40,
-      }}>
-        <span style={{ fontSize: 22, filter: `drop-shadow(0 0 8px ${S.gold})` }}>🏆</span>
-        <span style={{
-          fontFamily: "var(--cc-font-display)", fontWeight: 800, fontSize: 19,
-          color: S.text, letterSpacing: "0.02em",
-        }}>
-          Tournaments
-        </span>
+      <header style={{ padding:"16px 18px 12px", background:"rgba(9,9,11,0.95)", borderBottom:"1px solid rgba(232,197,71,0.1)", display:"flex", alignItems:"center", gap:10, position:"sticky", top:0, zIndex:40, backdropFilter:"blur(20px)" }}>
+        <span style={{ fontFamily:"serif", fontSize:20, color:"var(--gold)" }}>♚</span>
+        <span style={{ fontFamily:"var(--font-display)", fontSize:20, color:"var(--text)", letterSpacing:"0.08em" }}>TOURNAMENTS</span>
       </header>
 
       <main style={{ maxWidth: 480, margin: "0 auto", padding: "4px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
@@ -145,7 +135,7 @@ export default function TournamentsPage() {
             {/* ── Tabs ────────────────────────────────────────── */}
             <div style={{
               display: "flex", gap: 6,
-              background: S.surface, borderRadius: 16, padding: 5,
+              background: "var(--card)", borderRadius: 16, padding: 5,
               border: `1px solid ${S.border}`,
               animation: "cc-fade-up 0.35s ease both",
             }}>
@@ -182,7 +172,7 @@ export default function TournamentsPage() {
             {/* ── List ────────────────────────────────────────── */}
             {visible.length === 0 ? (
               <div style={{
-                background: S.surface, border: `1px solid ${S.border}`,
+                background: "var(--card)", border: `1px solid ${S.border}`,
                 borderRadius: 20, padding: 48, textAlign: "center",
               }}>
                 <span style={{ fontSize: 44 }}>🏆</span>
@@ -203,7 +193,7 @@ export default function TournamentsPage() {
                   const rs        = REG_STATUS[r.status] ?? REG_STATUS.pending
                   return (
                     <div key={r.id} style={{
-                      background: S.surface,
+                      background: "var(--card)",
                       border: `1px solid ${isLive ? "rgba(245,158,11,0.3)" : S.border}`,
                       borderRadius: 20, overflow: "hidden",
                       boxShadow: isLive ? "0 0 20px rgba(245,158,11,0.08)" : "none",

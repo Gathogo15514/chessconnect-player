@@ -78,7 +78,7 @@ export default function MissionsPage() {
   }, [router])
 
   return (
-    <div style={{ minHeight: "100vh", background: S.bg, paddingBottom: 80 }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", paddingBottom: 80 }}>
       <style>{`
         @keyframes cc-spin    { to { transform: rotate(360deg); } }
         @keyframes cc-fade-up { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
@@ -88,20 +88,10 @@ export default function MissionsPage() {
       `}</style>
 
       {/* Header */}
-      <header style={{
-        padding: "18px 16px 14px",
-        background: `linear-gradient(180deg, ${S.surface} 0%, transparent 100%)`,
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        position: "sticky", top: 0, zIndex: 40,
-      }}>
+      <header style={{ padding:"16px 18px 12px", background:"rgba(9,9,11,0.95)", borderBottom:"1px solid rgba(232,197,71,0.1)", display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, zIndex:40, backdropFilter:"blur(20px)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 22, filter: `drop-shadow(0 0 8px ${S.amber})` }}>🎯</span>
-          <span style={{
-            fontFamily: "var(--cc-font-display)", fontWeight: 800, fontSize: 19,
-            color: S.text, letterSpacing: "0.02em",
-          }}>
-            Missions
-          </span>
+          <span style={{ fontFamily:"serif", fontSize:20, color:"var(--orange)" }}>⚔</span>
+          <span style={{ fontFamily:"var(--font-display)", fontSize:20, color:"var(--text)", letterSpacing:"0.08em" }}>MISSIONS</span>
         </div>
         {!loading && !apiError && missions.length > 0 && (
           <span style={{
@@ -150,7 +140,7 @@ export default function MissionsPage() {
           </div>
         ) : missions.length === 0 ? (
           <div style={{
-            background: S.surface, border: `1px solid ${S.border}`,
+            background: "var(--card)", border: `1px solid ${S.border}`,
             borderRadius: 22, padding: "48px 24px", textAlign: "center",
             animation: "cc-fade-up 0.35s ease both",
           }}>
@@ -179,7 +169,7 @@ export default function MissionsPage() {
               return (
                 <Link key={m.result_id} href={`/assignments/${m.assignment_id}`} style={{ textDecoration: "none" }}>
                   <div className="mission-card" style={{
-                    background: S.surface,
+                    background: "var(--card)",
                     border: `1px solid ${inProg ? "rgba(96,165,250,0.25)" : S.border}`,
                     borderLeft: `3px solid ${diff?.color ?? (inProg ? S.blue : "rgba(255,255,255,0.08)")}`,
                     borderRadius: 20,

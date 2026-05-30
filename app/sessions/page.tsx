@@ -71,26 +71,16 @@ export default function SessionsPage() {
   const pct     = total > 0 ? Math.round(((present + late) / total) * 100) : null
 
   return (
-    <div style={{ minHeight: "100vh", background: S.bg, paddingBottom: 80 }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", paddingBottom: 80 }}>
       <style>{`
         @keyframes cc-spin    { to { transform: rotate(360deg); } }
         @keyframes cc-fade-up { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
       `}</style>
 
       {/* Header */}
-      <header style={{
-        padding: "18px 16px 14px",
-        background: `linear-gradient(180deg, ${S.surface} 0%, transparent 100%)`,
-        display: "flex", alignItems: "center", gap: 10,
-        position: "sticky", top: 0, zIndex: 40,
-      }}>
-        <span style={{ fontSize: 22, filter: `drop-shadow(0 0 8px ${S.green})` }}>📅</span>
-        <span style={{
-          fontFamily: "var(--cc-font-display)", fontWeight: 800, fontSize: 19,
-          color: S.text, letterSpacing: "0.02em",
-        }}>
-          Sessions
-        </span>
+      <header style={{ padding:"16px 18px 12px", background:"rgba(9,9,11,0.95)", borderBottom:"1px solid rgba(232,197,71,0.1)", display:"flex", alignItems:"center", gap:10, position:"sticky", top:0, zIndex:40, backdropFilter:"blur(20px)" }}>
+        <span style={{ fontFamily:"serif", fontSize:20, color:"var(--blue)" }}>♜</span>
+        <span style={{ fontFamily:"var(--font-display)", fontSize:20, color:"var(--text)", letterSpacing:"0.08em" }}>SESSIONS</span>
       </header>
 
       <main style={{ maxWidth: 480, margin: "0 auto", padding: "4px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
@@ -115,7 +105,7 @@ export default function SessionsPage() {
             {/* ── Attendance summary ──────────────────────────── */}
             {pct !== null && (
               <div style={{
-                background: S.surface, border: `1px solid rgba(16,185,129,0.18)`,
+                background: "var(--card)", border: `1px solid rgba(16,185,129,0.18)`,
                 borderRadius: 22, padding: 18,
                 display: "flex", alignItems: "center", gap: 20,
                 animation: "cc-fade-up 0.35s ease both",
@@ -175,7 +165,7 @@ export default function SessionsPage() {
             {/* ── Session list ────────────────────────────────── */}
             {attendance.length === 0 ? (
               <div style={{
-                background: S.surface, border: `1px solid ${S.border}`,
+                background: "var(--card)", border: `1px solid ${S.border}`,
                 borderRadius: 20, padding: 48, textAlign: "center",
               }}>
                 <span style={{ fontSize: 40 }}>📅</span>
@@ -188,7 +178,7 @@ export default function SessionsPage() {
               </div>
             ) : (
               <div style={{
-                background: S.surface, border: `1px solid ${S.border}`,
+                background: "var(--card)", border: `1px solid ${S.border}`,
                 borderRadius: 20, overflow: "hidden",
                 animation: "cc-fade-up 0.4s ease 0.05s both",
               }}>

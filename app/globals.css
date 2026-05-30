@@ -1,128 +1,171 @@
 @import "tailwindcss";
 
-/* ── ChessConnect Design System ─────────────────────────── */
+/* ═══════════════════════════════════════════════════
+   CHESSCONNECT — KING'S GAMBIT DESIGN SYSTEM
+   Inspired by: Think app boldness · Chess.com depth
+   · Chess Master warmth
+   ═══════════════════════════════════════════════════ */
+
 :root {
-  --cc-bg:         #070B17;
-  --cc-surface:    #0D1224;
-  --cc-card:       #121829;
-  --cc-card-hi:    #171E2E;
-  --cc-border:     rgba(255,255,255,0.06);
-  --cc-border-med: rgba(255,255,255,0.10);
+  /* Palette — near-black with warm chess gold */
+  --bg:         #09090B;   /* zinc-950           */
+  --surface:    #111115;   /* slightly lighter   */
+  --card:       #18181C;   /* card surface       */
+  --card-hi:    #1F1F25;   /* hovered card       */
+  --border:     rgba(255,255,255,0.07);
+  --border-med: rgba(255,255,255,0.13);
 
-  --cc-text:    #F1F5F9;
-  --cc-text-2:  #94A3B8;
-  --cc-text-3:  #475569;
-  --cc-text-4:  #1E293B;
+  /* Text */
+  --text:   #FAFAFA;        /* near-white         */
+  --text-2: #A1A1AA;        /* zinc-400           */
+  --text-3: #52525B;        /* zinc-600           */
+  --text-4: #27272A;        /* zinc-800           */
 
-  --cc-green:  #10B981;
-  --cc-gold:   #F0B429;
-  --cc-purple: #818CF8;
-  --cc-amber:  #F59E0B;
-  --cc-blue:   #60A5FA;
-  --cc-red:    #F87171;
+  /* Accents */
+  --gold:   #E8C547;        /* chess-board gold   */
+  --amber:  #F59E0B;        /* warm amber         */
+  --green:  #22C55E;        /* bright active      */
+  --blue:   #60A5FA;
+  --purple: #A78BFA;
+  --red:    #F87171;
+  --orange: #FB923C;
 
-  --cc-font-display: 'Syne', sans-serif;
-  --cc-font-body:    'Outfit', sans-serif;
+  /* Fonts */
+  --font-display: 'Bebas Neue', 'Impact', sans-serif;
+  --font-ui:      'DM Sans', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+  --font-mono:    'DM Mono', monospace;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
 
+html { scroll-behavior: smooth; }
+
 html, body {
-  background: var(--cc-bg);
-  color: var(--cc-text);
-  font-family: var(--cc-font-body);
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-size: 15px;
 }
 
-/* ── Scrollbar ──────────────────────────────────────────── */
+/* ── Scrollbar ──────────────────────────────────────── */
 ::-webkit-scrollbar              { width: 3px; height: 3px; }
 ::-webkit-scrollbar-track        { background: transparent; }
-::-webkit-scrollbar-thumb        { background: rgba(255,255,255,0.08); border-radius: 99px; }
+::-webkit-scrollbar-thumb        { background: rgba(255,255,255,0.1); border-radius: 99px; }
 
-/* ── Animations ─────────────────────────────────────────── */
+/* ── Animations ─────────────────────────────────────── */
 @keyframes cc-spin {
   to { transform: rotate(360deg); }
 }
 @keyframes cc-fade-up {
-  from { opacity: 0; transform: translateY(14px); }
+  from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+@keyframes cc-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
 @keyframes cc-shimmer {
-  0%   { background-position: -200% center; }
-  100% { background-position:  200% center; }
+  0%   { background-position: -300% center; }
+  100% { background-position:  300% center; }
 }
 @keyframes cc-pulse {
-  0%, 100% { opacity: 0.7; }
+  0%, 100% { opacity: 0.6; }
   50%       { opacity: 1; }
 }
 @keyframes cc-float {
   0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-5px); }
+  50%       { transform: translateY(-6px); }
 }
 @keyframes cc-pop {
-  0%   { transform: scale(0.88); opacity: 0; }
+  0%   { transform: scale(0.85); opacity: 0; }
+  60%  { transform: scale(1.04); }
   100% { transform: scale(1);    opacity: 1; }
 }
-@keyframes cc-nav-glow {
-  0%, 100% { opacity: 0.85; }
+@keyframes cc-glow-pulse {
+  0%, 100% { box-shadow: 0 0 12px var(--gold); }
+  50%       { box-shadow: 0 0 28px var(--gold); }
+}
+@keyframes cc-nav-active {
+  0%, 100% { opacity: 0.9; }
   50%       { opacity: 1; }
 }
-
-/* ── Page enter ─────────────────────────────────────────── */
-.cc-page {
-  animation: cc-fade-up 0.3s ease both;
+@keyframes cc-live {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
 }
 
-/* ── Dark form inputs ───────────────────────────────────── */
+/* ── Utility classes ─────────────────────────────────── */
+.cc-page {
+  animation: cc-fade-up 0.32s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+/* Bebas Neue display text */
+.cc-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+/* Dark input */
 .cc-input {
   width: 100%;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  color: #f1f5f9;
-  border-radius: 12px;
-  padding: 10px 14px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border-med);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 11px 15px;
   font-size: 14px;
-  font-family: var(--cc-font-body);
+  font-family: var(--font-body);
   outline: none;
   transition: border-color 0.15s, background 0.15s;
-  appearance: none;
 }
 .cc-input:focus {
-  border-color: rgba(16,185,129,0.45);
-  background: rgba(255,255,255,0.06);
+  border-color: var(--gold);
+  background: rgba(232,197,71,0.04);
 }
-.cc-input[readonly], .cc-input:read-only {
-  opacity: 0.38;
-  cursor: not-allowed;
-}
-.cc-input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.5);
-}
+.cc-input[readonly] { opacity: 0.35; cursor: not-allowed; }
+.cc-input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
+
+/* Label */
 .cc-label {
   display: block;
+  font-family: var(--font-display);
   font-size: 11px;
-  font-weight: 700;
-  color: #475569;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.12em;
+  color: var(--text-3);
+  margin-bottom: 7px;
   text-transform: uppercase;
-  font-family: var(--cc-font-display);
-  margin-bottom: 6px;
 }
 
-/* ── Card hover lift ────────────────────────────────────── */
-.cc-lift {
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-.cc-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+/* Gold pill badge */
+.cc-badge-gold {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+  background: rgba(232,197,71,0.1);
+  border: 1px solid rgba(232,197,71,0.25);
+  border-radius: 99px;
+  padding: 3px 10px;
 }
 
-/* ── Nav tab tap feedback ───────────────────────────────── */
-.cc-nav-tab {
-  transition: opacity 0.15s;
+/* Card press */
+.cc-card-press {
+  transition: transform 0.12s ease, opacity 0.12s;
+  cursor: pointer;
 }
-.cc-nav-tab:active {
-  opacity: 0.7;
+.cc-card-press:active { transform: scale(0.97); opacity: 0.85; }
+
+/* Nav tap */
+.cc-nav-tab { transition: opacity 0.12s; }
+.cc-nav-tab:active { opacity: 0.6; }
+
+/* Checkerboard micro-pattern (decorative) */
+.cc-chess-bg {
+  background-image:
+    repeating-conic-gradient(rgba(232,197,71,0.04) 0% 25%, transparent 0% 50%);
+  background-size: 24px 24px;
 }

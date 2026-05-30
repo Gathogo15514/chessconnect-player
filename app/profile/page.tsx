@@ -27,7 +27,7 @@ const S = {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div style={{
-      background: S.surface, border: `1px solid ${S.border}`,
+      background: "var(--card)", border: `1px solid ${S.border}`,
       borderRadius: 20, overflow: "hidden",
     }}>
       <div style={{
@@ -177,7 +177,7 @@ export default function ProfilePage() {
   const av = getAvatar(avatarId)
 
   return (
-    <div style={{ minHeight: "100vh", background: S.bg, paddingBottom: 80 }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", paddingBottom: 80 }}>
       <style>{`
         @keyframes cc-spin    { to { transform: rotate(360deg); } }
         @keyframes cc-fade-up { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
@@ -185,19 +185,9 @@ export default function ProfilePage() {
       `}</style>
 
       {/* Header */}
-      <header style={{
-        padding: "18px 16px 14px",
-        background: `linear-gradient(180deg, ${S.surface} 0%, transparent 100%)`,
-        display: "flex", alignItems: "center", gap: 10,
-        position: "sticky", top: 0, zIndex: 40,
-      }}>
-        <span style={{ fontSize: 22 }}>👤</span>
-        <span style={{
-          fontFamily: "var(--cc-font-display)", fontWeight: 800, fontSize: 19,
-          color: S.text, letterSpacing: "0.02em",
-        }}>
-          My Profile
-        </span>
+      <header style={{ padding:"16px 18px 12px", background:"rgba(9,9,11,0.95)", borderBottom:"1px solid rgba(232,197,71,0.1)", display:"flex", alignItems:"center", gap:10, position:"sticky", top:0, zIndex:40, backdropFilter:"blur(20px)" }}>
+        <span style={{ fontFamily:"serif", fontSize:20, color:"var(--gold)" }}>♔</span>
+        <span style={{ fontFamily:"var(--font-display)", fontSize:20, color:"var(--text)", letterSpacing:"0.08em" }}>MY PROFILE</span>
       </header>
 
       <main style={{ maxWidth: 480, margin: "0 auto", padding: "4px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
@@ -319,7 +309,7 @@ export default function ProfilePage() {
 
               {/* ── Character picker ─────────────────────────── */}
               <div style={{
-                background: S.surface, border: `1px solid rgba(16,185,129,0.15)`,
+                background: "var(--card)", border: `1px solid rgba(16,185,129,0.15)`,
                 borderRadius: 20, overflow: "hidden",
               }}>
                 <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
@@ -384,7 +374,7 @@ export default function ProfilePage() {
               </div>
 
               {/* ── Board theme picker ───────────────────────── */}
-              <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 20, overflow: "hidden" }}>
+              <div style={{ background: "var(--card)", border: `1px solid ${S.border}`, borderRadius: 20, overflow: "hidden" }}>
                 <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                   <p style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 12, color: S.text2, letterSpacing: "0.08em", textTransform: "uppercase" }}>
                     Board Theme
@@ -424,7 +414,7 @@ export default function ProfilePage() {
               </div>
 
               {/* ── Piece style picker ───────────────────────── */}
-              <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 20, overflow: "hidden" }}>
+              <div style={{ background: "var(--card)", border: `1px solid ${S.border}`, borderRadius: 20, overflow: "hidden" }}>
                 <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                   <p style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 12, color: S.text2, letterSpacing: "0.08em", textTransform: "uppercase" }}>
                     Piece Style
@@ -460,7 +450,7 @@ export default function ProfilePage() {
               </div>
 
               {/* ── Board orientation ────────────────────────── */}
-              <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 20, overflow: "hidden" }}>
+              <div style={{ background: "var(--card)", border: `1px solid ${S.border}`, borderRadius: 20, overflow: "hidden" }}>
                 <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                   <p style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 12, color: S.text2, letterSpacing: "0.08em", textTransform: "uppercase" }}>
                     Board Orientation

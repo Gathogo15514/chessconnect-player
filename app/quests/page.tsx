@@ -522,26 +522,14 @@ export default function QuestsPage() {
       )}
 
       {/* Header */}
-      <header style={{ background: "linear-gradient(135deg, #0f172a, #14532d)", borderBottom: "1px solid rgba(16,185,129,0.15)" }}
-        className="px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl text-white">⚔️</span>
-          <div>
-            <p className="font-bold text-white text-base">Quest Map</p>
-            <p className="text-xs" style={{ color: "rgba(16,185,129,0.6)" }}>Adventure awaits</p>
-          </div>
+      <header style={{ padding:"16px 18px 12px", background:"rgba(9,9,11,0.95)", borderBottom:"1px solid rgba(232,197,71,0.1)", display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, zIndex:40, backdropFilter:"blur(20px)" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+          <span style={{ fontFamily:"serif", fontSize:20, color:"var(--orange)" }}>⚔</span>
+          <span style={{ fontFamily:"var(--font-display)", fontSize:20, color:"var(--text)", letterSpacing:"0.08em" }}>QUEST MAP</span>
         </div>
-        <div className="flex items-center gap-2">
-          <a href="/puzzle-rush"
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold"
-            style={{ background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)", color: "#f59e0b" }}>
-            ⚡ Rush
-          </a>
-          <a href="/duel"
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold"
-            style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171" }}>
-            🤺 Duel
-          </a>
+        <div style={{ display:"flex", gap:6 }}>
+          <a href="/puzzle-rush" style={{ fontFamily:"var(--font-display)", fontSize:10, letterSpacing:"0.08em", padding:"5px 12px", borderRadius:99, background:"rgba(232,197,71,0.1)", border:"1px solid rgba(232,197,71,0.25)", color:"var(--gold)", textDecoration:"none" }}>⚡ RUSH</a>
+          <a href="/duel" style={{ fontFamily:"var(--font-display)", fontSize:10, letterSpacing:"0.08em", padding:"5px 12px", borderRadius:99, background:"rgba(248,113,113,0.1)", border:"1px solid rgba(248,113,113,0.2)", color:"var(--red)", textDecoration:"none" }}>🤺 DUEL</a>
         </div>
       </header>
 
@@ -556,14 +544,14 @@ export default function QuestsPage() {
             {/* Stats row */}
             <div className="grid grid-cols-3 gap-3">
               {[
-                { icon: "♚", label: "Level",  value: level,          color: "#10b981" },
-                { icon: "🪙", label: "Gold",   value: gold,           color: "#f59e0b" },
-                { icon: "🔥", label: "Streak", value: `${streak}d`,   color: "#f97316" },
+                { icon: "♚", label: "LEVEL",  value: String(level),  color: "var(--gold)" },
+                { icon: "🪙", label: "GOLD",   value: String(gold),   color: "var(--amber)" },
+                { icon: "🔥", label: "STREAK", value: `${streak}D`,   color: "var(--orange)" },
               ].map((s, i) => (
-                <div key={i} style={{ background: "#0D1224", border: `1px solid ${s.color}25`, borderRadius: 18, padding: "14px 10px", textAlign: "center" }}>
-                  <span className="text-xl">{s.icon}</span>
-                  <p style={{ fontFamily: "var(--cc-font-display)", fontSize: 18, fontWeight: 800, marginTop: 6, color: s.color }}>{s.value}</p>
-                  <p style={{ fontFamily: "var(--cc-font-display)", fontSize: 9, color: "#334155", textTransform: "uppercase", letterSpacing: "0.09em", marginTop: 4, fontWeight: 700 }}>{s.label}</p>
+                <div key={i} style={{ background:"var(--card)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:18, padding:"14px 10px", textAlign:"center" }}>
+                  <span style={{ fontFamily:"serif", fontSize:20, color:s.color }}>{s.icon}</span>
+                  <p style={{ fontFamily:"var(--font-display)", fontSize:22, color:s.color, marginTop:6, lineHeight:1 }}>{s.value}</p>
+                  <p style={{ fontFamily:"var(--font-display)", fontSize:8, color:"var(--text-4)", letterSpacing:"0.12em", marginTop:4 }}>{s.label}</p>
                 </div>
               ))}
             </div>
@@ -588,10 +576,10 @@ export default function QuestsPage() {
 
             {/* Campaign trails */}
             {assignments.length === 0 ? (
-              <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: 48, textAlign: "center" }}>
-                <span style={{ fontSize: 52 }}>🗺️</span>
-                <p style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, color: "#64748B", marginTop: 14 }}>No active quests</p>
-                <p style={{ fontSize: 13, color: "#334155", marginTop: 6 }}>Your coach will assign campaigns here.</p>
+              <div style={{ background:"var(--card)", border:"1px solid var(--border)", borderRadius:20, padding:48, textAlign:"center" }}>
+                <span style={{ fontFamily:"serif", fontSize:52, color:"rgba(232,197,71,0.3)" }}>♜</span>
+                <p style={{ fontFamily:"var(--font-display)", color:"var(--text-3)", fontSize:18, letterSpacing:"0.1em", marginTop:14 }}>NO ACTIVE QUESTS</p>
+                <p style={{ fontSize:12, color:"var(--text-4)", marginTop:8 }}>Your coach will assign campaigns here.</p>
               </div>
             ) : (
               assignments.map(a => (
