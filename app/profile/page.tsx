@@ -1,13 +1,61 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter }           from "next/navigation"
-import { createClient }        from "@/lib/supabase/client"
-import { BottomNav }           from "@/components/BottomNav"
-import { BOARD_THEMES, PIECE_SETS } from "@/components/chess/themes"
-import type { ThemeId, PieceSetId } from "@/components/chess/themes"
-import { AVATARS, getAvatar } from "@/lib/avatars"
-import type { AvatarId } from "@/lib/avatars"
+import { useEffect, useState }       from "react"
+import { useRouter }                  from "next/navigation"
+import { createClient }               from "@/lib/supabase/client"
+import { BottomNav }                  from "@/components/BottomNav"
+import { BOARD_THEMES, PIECE_SETS }   from "@/components/chess/themes"
+import type { ThemeId, PieceSetId }   from "@/components/chess/themes"
+import { AVATARS, getAvatar }         from "@/lib/avatars"
+import type { AvatarId }              from "@/lib/avatars"
+
+const S = {
+  bg:      "#070B17",
+  surface: "#0D1224",
+  card:    "#121829",
+  border:  "rgba(255,255,255,0.06)",
+  borderMed: "rgba(255,255,255,0.10)",
+  text:    "#F1F5F9",
+  text2:   "#64748B",
+  text3:   "#334155",
+  green:   "#10B981",
+  gold:    "#F0B429",
+  amber:   "#F59E0B",
+  purple:  "#818CF8",
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div style={{
+      background: S.surface, border: `1px solid ${S.border}`,
+      borderRadius: 20, overflow: "hidden",
+    }}>
+      <div style={{
+        padding: "12px 16px",
+        borderBottom: "1px solid rgba(255,255,255,0.04)",
+      }}>
+        <p style={{
+          fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 12,
+          color: S.text2, letterSpacing: "0.08em", textTransform: "uppercase",
+        }}>
+          {title}
+        </p>
+      </div>
+      <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="cc-label">{label}</label>
+      {children}
+    </div>
+  )
+}
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -37,7 +85,6 @@ export default function ProfilePage() {
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.replace("/login"); return }
-
       setEmail(session.user.email ?? "")
 
       const [profileRes, playerRes] = await Promise.all([
@@ -49,7 +96,6 @@ export default function ProfilePage() {
           .eq("profile_id", session.user.id).maybeSingle(),
       ])
 
-      // load cosmetic preferences
       if (playerRes.data?.id) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: gp } = await (supabase.from("player_game_profiles") as any)
@@ -83,13 +129,11 @@ export default function ProfilePage() {
     e.preventDefault()
     setSaving(true)
     setSaveMsg(null)
-
     const supabase = createClient()
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { router.replace("/login"); return }
 
     const errors: string[] = []
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: profileErr } = await (supabase.from("profiles") as any)
       .update({ full_name: fullName }).eq("id", session.user.id)
@@ -99,13 +143,12 @@ export default function ProfilePage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error: playerErr } = await (supabase.from("players") as any)
         .update({
-          fide_id:          fideId     || null,
+          fide_id:          fideId          || null,
           admission_number: admissionNumber || null,
-          date_of_birth:    dateOfBirth    || null,
-          guardian_name:    guardianName   || null,
-          guardian_phone:   guardianPhone  || null,
-        })
-        .eq("id", playerId)
+          date_of_birth:    dateOfBirth     || null,
+          guardian_name:    guardianName    || null,
+          guardian_phone:   guardianPhone   || null,
+        }).eq("id", playerId)
       if (playerErr) errors.push(playerErr.message)
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -120,275 +163,364 @@ export default function ProfilePage() {
       } else {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error: gpErr } = await (supabase.from("player_game_profiles") as any)
-          .insert({
-            player_id: playerId, board_theme: boardTheme, piece_set: pieceSet,
-            board_flipped: boardFlipped, avatar_id: avatarId,
-            current_level: 1, total_xp: 0,
-            gold_balance: 0, streak_current: 0, streak_shields: 0,
-            level_xp_start: 0, level_xp_threshold: 100,
-          })
+          .insert({ player_id: playerId, board_theme: boardTheme, piece_set: pieceSet, board_flipped: boardFlipped,
+            avatar_id: avatarId, current_level: 1, total_xp: 0, gold_balance: 0, streak_current: 0,
+            streak_shields: 0, level_xp_start: 0, level_xp_threshold: 100 })
         if (gpErr) errors.push(gpErr.message)
       }
     }
 
-    setSaveMsg(errors.length ? `Error: ${errors.join("; ")}` : "Saved successfully!")
+    setSaveMsg(errors.length ? `Error: ${errors.join("; ")}` : "Profile saved!")
     setSaving(false)
   }
 
-  async function handleSignOut() {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.replace("/login")
-  }
+  const av = getAvatar(avatarId)
 
   return (
-    <div className="min-h-screen bg-stone-50 pb-20">
-      <header className="bg-green-900 text-white px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">♟</span>
-          <span className="font-bold text-lg">My Profile</span>
-        </div>
-        <button onClick={handleSignOut} className="text-sm text-green-200 hover:text-white">Sign out</button>
+    <div style={{ minHeight: "100vh", background: S.bg, paddingBottom: 80 }}>
+      <style>{`
+        @keyframes cc-spin    { to { transform: rotate(360deg); } }
+        @keyframes cc-fade-up { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes cc-float   { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+      `}</style>
+
+      {/* Header */}
+      <header style={{
+        padding: "18px 16px 14px",
+        background: `linear-gradient(180deg, ${S.surface} 0%, transparent 100%)`,
+        display: "flex", alignItems: "center", gap: 10,
+        position: "sticky", top: 0, zIndex: 40,
+      }}>
+        <span style={{ fontSize: 22 }}>👤</span>
+        <span style={{
+          fontFamily: "var(--cc-font-display)", fontWeight: 800, fontSize: 19,
+          color: S.text, letterSpacing: "0.02em",
+        }}>
+          My Profile
+        </span>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-6">
+      <main style={{ maxWidth: 480, margin: "0 auto", padding: "4px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
         {loading ? (
-          <div className="flex justify-center py-24">
-            <div className="w-8 h-8 border-4 border-green-800 border-t-transparent rounded-full animate-spin" />
+          <div style={{ display: "flex", justifyContent: "center", paddingTop: 80 }}>
+            <div style={{
+              width: 36, height: 36,
+              border: `3px solid ${S.green}`, borderTopColor: "transparent",
+              borderRadius: "50%", animation: "cc-spin 0.9s linear infinite",
+            }} />
           </div>
         ) : (
           <>
-            {/* Summary card */}
-            <div className="bg-green-900 rounded-2xl p-5 mb-5 flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-amber-400/20 border-2 border-amber-400/40 flex items-center justify-center text-3xl flex-shrink-0">
-                {fullName ? fullName[0]?.toUpperCase() : "?"}
+            {/* ── Player card ─────────────────────────────────── */}
+            <div style={{
+              background: `linear-gradient(135deg, ${S.surface}, #12152A)`,
+              border: `1px solid ${av.color}30`,
+              borderRadius: 24, padding: 20,
+              display: "flex", alignItems: "center", gap: 16,
+              position: "relative", overflow: "hidden",
+              animation: "cc-fade-up 0.35s ease both",
+            }}>
+              {/* Glow bg */}
+              <div style={{
+                position: "absolute", top: -40, right: -40,
+                width: 120, height: 120, borderRadius: "50%",
+                background: `radial-gradient(circle, ${av.glow ?? av.color + "22"} 0%, transparent 70%)`,
+                pointerEvents: "none",
+              }} />
+
+              {/* Avatar */}
+              <div style={{
+                width: 70, height: 70, borderRadius: "50%", flexShrink: 0,
+                background: `radial-gradient(circle at 35% 35%, ${av.color}30, ${av.color}08)`,
+                border: `2.5px solid ${av.color}`,
+                boxShadow: `0 0 20px ${av.glow ?? av.color + "30"}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 30,
+                animation: "cc-float 3s ease-in-out infinite",
+              }}>
+                {av.emoji}
               </div>
-              <div>
-                <p className="text-white font-bold text-lg leading-tight">{fullName || "—"}</p>
-                <p className="text-green-300 text-sm">{email}</p>
-                <div className="flex items-center gap-2 mt-1 flex-wrap">
+
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{
+                  fontFamily: "var(--cc-font-display)", fontWeight: 800, fontSize: 20,
+                  color: S.text, lineHeight: 1.2,
+                }}>
+                  {fullName || "—"}
+                </p>
+                <p style={{ color: av.color, fontSize: 12, fontWeight: 600, marginTop: 2 }}>
+                  {av.name} · {av.class}
+                </p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
                   {fideTitle && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-400 uppercase">{fideTitle}</span>
+                    <span style={{
+                      fontFamily: "var(--cc-font-display)", fontSize: 10, fontWeight: 700,
+                      color: S.gold, background: "rgba(240,180,41,0.1)",
+                      border: "1px solid rgba(240,180,41,0.2)",
+                      borderRadius: 20, padding: "2px 8px",
+                    }}>
+                      {fideTitle}
+                    </span>
                   )}
                   {currentRating && (
-                    <span className="text-[10px] text-green-300">Rating: {currentRating}</span>
+                    <span style={{
+                      fontFamily: "var(--cc-font-display)", fontSize: 10, fontWeight: 700,
+                      color: S.green, background: "rgba(16,185,129,0.08)",
+                      border: "1px solid rgba(16,185,129,0.15)",
+                      borderRadius: 20, padding: "2px 8px",
+                    }}>
+                      ♔ {currentRating}
+                    </span>
                   )}
                   {(school || club) && (
-                    <span className="text-[10px] text-green-300">{school ?? club}</span>
+                    <span style={{ fontSize: 11, color: S.text3 }}>{school ?? club}</span>
                   )}
                 </div>
               </div>
             </div>
 
-            <form onSubmit={handleSave} className="space-y-4">
-              <div className="bg-white rounded-2xl border border-stone-200 p-4 space-y-4 shadow-sm">
-                <h2 className="font-bold text-stone-800 text-sm">Personal Information</h2>
+            {/* ── Form ────────────────────────────────────────── */}
+            <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <Section title="Personal Information">
+                <Field label="Full Name">
+                  <input className="cc-input" type="text" value={fullName}
+                    onChange={e => setFullName(e.target.value)} placeholder="Your full name" />
+                </Field>
+                <Field label="Email">
+                  <input className="cc-input" type="email" value={email} readOnly />
+                </Field>
+                <Field label="Date of Birth">
+                  <input className="cc-input" type="date" value={dateOfBirth}
+                    onChange={e => setDateOfBirth(e.target.value)} />
+                </Field>
+              </Section>
 
-                <div>
-                  <label className="block text-xs font-semibold text-stone-500 mb-1">Full Name</label>
-                  <input
-                    type="text" value={fullName} onChange={e => setFullName(e.target.value)}
-                    className="w-full rounded-xl border border-stone-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent"
-                    placeholder="Your full name"
-                  />
+              <Section title="Chess Details">
+                <Field label="FIDE ID">
+                  <input className="cc-input" type="text" value={fideId}
+                    onChange={e => setFideId(e.target.value)} placeholder="Your FIDE ID (optional)" />
+                </Field>
+                <Field label="Admission Number">
+                  <input className="cc-input" type="text" value={admissionNumber}
+                    onChange={e => setAdmissionNumber(e.target.value)} placeholder="School admission number" />
+                </Field>
+              </Section>
+
+              <Section title="Guardian / Emergency Contact">
+                <Field label="Guardian Name">
+                  <input className="cc-input" type="text" value={guardianName}
+                    onChange={e => setGuardianName(e.target.value)} placeholder="Parent or guardian name" />
+                </Field>
+                <Field label="Guardian Phone">
+                  <input className="cc-input" type="tel" value={guardianPhone}
+                    onChange={e => setGuardianPhone(e.target.value)} placeholder="+254 700 000 000" />
+                </Field>
+              </Section>
+
+              {/* ── Character picker ─────────────────────────── */}
+              <div style={{
+                background: S.surface, border: `1px solid rgba(16,185,129,0.15)`,
+                borderRadius: 20, overflow: "hidden",
+              }}>
+                <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                  <p style={{
+                    fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 12,
+                    color: S.green, letterSpacing: "0.08em", textTransform: "uppercase",
+                  }}>
+                    ⚔️ Your Character
+                  </p>
                 </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-stone-500 mb-1">Email</label>
-                  <input
-                    type="email" value={email} readOnly
-                    className="w-full rounded-xl border border-stone-100 bg-stone-50 px-3 py-2 text-sm text-stone-400 cursor-not-allowed"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-stone-500 mb-1">Date of Birth</label>
-                  <input
-                    type="date" value={dateOfBirth} onChange={e => setDateOfBirth(e.target.value)}
-                    className="w-full rounded-xl border border-stone-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              <div className="bg-white rounded-2xl border border-stone-200 p-4 space-y-4 shadow-sm">
-                <h2 className="font-bold text-stone-800 text-sm">Chess Details</h2>
-
-                <div>
-                  <label className="block text-xs font-semibold text-stone-500 mb-1">FIDE ID</label>
-                  <input
-                    type="text" value={fideId} onChange={e => setFideId(e.target.value)}
-                    className="w-full rounded-xl border border-stone-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent"
-                    placeholder="Your FIDE ID (optional)"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-stone-500 mb-1">Admission Number</label>
-                  <input
-                    type="text" value={admissionNumber} onChange={e => setAdmissionNumber(e.target.value)}
-                    className="w-full rounded-xl border border-stone-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent"
-                    placeholder="School admission number"
-                  />
-                </div>
-              </div>
-
-              <div className="bg-white rounded-2xl border border-stone-200 p-4 space-y-4 shadow-sm">
-                <h2 className="font-bold text-stone-800 text-sm">Guardian / Emergency Contact</h2>
-
-                <div>
-                  <label className="block text-xs font-semibold text-stone-500 mb-1">Guardian Name</label>
-                  <input
-                    type="text" value={guardianName} onChange={e => setGuardianName(e.target.value)}
-                    className="w-full rounded-xl border border-stone-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent"
-                    placeholder="Parent or guardian name"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-stone-500 mb-1">Guardian Phone</label>
-                  <input
-                    type="tel" value={guardianPhone} onChange={e => setGuardianPhone(e.target.value)}
-                    className="w-full rounded-xl border border-stone-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent"
-                    placeholder="+254 700 000 000"
-                  />
-                </div>
-              </div>
-
-              {/* Avatar / Character picker */}
-              <div style={{ background: "#0f172a", borderRadius: 16, padding: 16, border: "1px solid rgba(16,185,129,0.15)" }}>
-                <h2 className="font-bold text-sm mb-3" style={{ color: "#10b981" }}>⚔️ Your Character</h2>
-                <div className="grid grid-cols-2 gap-2">
-                  {AVATARS.map(av => {
-                    const selected = avatarId === av.id
-                    const locked   = false // level check optional — kept open for all for now
+                <div style={{ padding: 12, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  {AVATARS.map(a => {
+                    const selected = avatarId === a.id
                     return (
                       <button
-                        key={av.id} type="button"
-                        onClick={() => !locked && setAvatarId(av.id)}
+                        key={a.id} type="button"
+                        onClick={() => setAvatarId(a.id)}
                         style={{
-                          borderRadius: 12, padding: "10px 12px",
-                          background:  selected ? `rgba(${av.glow ? "16,185,129" : "255,255,255"},0.08)` : "rgba(255,255,255,0.04)",
-                          border:      `2px solid ${selected ? av.color : "rgba(255,255,255,0.08)"}`,
-                          boxShadow:   selected ? `0 0 12px ${av.glow}` : "none",
-                          cursor:      "pointer", textAlign: "left", transition: "all 0.15s",
+                          borderRadius: 14, padding: "10px 12px",
+                          background:  selected ? `${a.color}14` : "rgba(255,255,255,0.03)",
+                          border:      `2px solid ${selected ? a.color : "rgba(255,255,255,0.07)"}`,
+                          boxShadow:   selected ? `0 0 14px ${a.glow ?? a.color + "30"}` : "none",
+                          cursor: "pointer", textAlign: "left", transition: "all 0.15s",
                         }}
                       >
-                        <div className="flex items-center gap-2 mb-1">
-                          <span style={{ fontSize: 22 }}>{av.emoji}</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                          <span style={{ fontSize: 22 }}>{a.emoji}</span>
                           <div>
-                            <p style={{ fontSize: 12, fontWeight: 700, color: selected ? av.color : "#e2e8f0", lineHeight: 1.2 }}>{av.name}</p>
-                            <p style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>{av.class}</p>
+                            <p style={{ fontSize: 12, fontWeight: 700, color: selected ? a.color : "#e2e8f0", lineHeight: 1.2, fontFamily: "var(--cc-font-display)" }}>
+                              {a.name}
+                            </p>
+                            <p style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{a.class}</p>
                           </div>
                         </div>
-                        <p style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", lineHeight: 1.3 }}>{av.description}</p>
-                        {av.unlockLevel > 1 && (
-                          <p style={{ fontSize: 9, color: av.color, marginTop: 4, opacity: 0.7 }}>Lv. {av.unlockLevel}+</p>
+                        <p style={{ fontSize: 10, color: "rgba(255,255,255,0.28)", lineHeight: 1.3 }}>{a.description}</p>
+                        {a.unlockLevel > 1 && (
+                          <p style={{ fontSize: 9, color: a.color, marginTop: 3, opacity: 0.7, fontFamily: "var(--cc-font-display)" }}>
+                            Lv. {a.unlockLevel}+
+                          </p>
                         )}
                       </button>
                     )
                   })}
                 </div>
-                {(() => { const av = getAvatar(avatarId); return (
-                  <div style={{ marginTop: 12, padding: "10px 14px", background: "rgba(255,255,255,0.04)", borderRadius: 10, display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ fontSize: 28 }}>{av.emoji}</span>
-                    <div>
-                      <p style={{ fontSize: 13, fontWeight: 700, color: av.color }}>{av.name}</p>
-                      <p style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{av.class} · {av.description}</p>
-                    </div>
+                {/* Selected preview */}
+                <div style={{
+                  margin: "0 12px 12px",
+                  padding: "10px 14px",
+                  background: `${av.color}0D`,
+                  border: `1px solid ${av.color}20`,
+                  borderRadius: 12,
+                  display: "flex", alignItems: "center", gap: 10,
+                }}>
+                  <span style={{ fontSize: 26 }}>{av.emoji}</span>
+                  <div>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: av.color, fontFamily: "var(--cc-font-display)" }}>
+                      {av.name}
+                    </p>
+                    <p style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{av.class} · {av.description}</p>
                   </div>
-                )})()}
-              </div>
-
-              {/* Board theme picker */}
-              <div className="bg-white rounded-2xl border border-stone-200 p-4 space-y-4 shadow-sm">
-                <h2 className="font-bold text-stone-800 text-sm">Board Theme</h2>
-                <div className="grid grid-cols-2 gap-2">
-                  {(Object.values(BOARD_THEMES)).map(t => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => setBoardTheme(t.id)}
-                      className={`rounded-xl border-2 p-2 flex items-center gap-2 transition-all ${
-                        boardTheme === t.id
-                          ? "border-green-700 bg-green-50"
-                          : "border-stone-200 hover:border-stone-300"
-                      }`}
-                    >
-                      {/* mini board preview */}
-                      <div className="grid grid-cols-4 w-8 h-8 rounded overflow-hidden flex-shrink-0">
-                        {Array.from({ length: 16 }, (_, i) => (
-                          <div key={i} style={{ background: (Math.floor(i / 4) + i) % 2 === 0 ? t.lightSquare : t.darkSquare }} />
-                        ))}
-                      </div>
-                      <div className="text-left min-w-0">
-                        <p className="text-xs font-semibold text-stone-800 leading-tight truncate">{t.displayName}</p>
-                        <p className="text-[10px] text-stone-400">{t.emoji}</p>
-                      </div>
-                    </button>
-                  ))}
                 </div>
               </div>
 
-              {/* Piece set picker */}
-              <div className="bg-white rounded-2xl border border-stone-200 p-4 space-y-4 shadow-sm">
-                <h2 className="font-bold text-stone-800 text-sm">Piece Style</h2>
-                <div className="grid grid-cols-2 gap-2">
-                  {(Object.values(PIECE_SETS)).map(ps => (
-                    <button
-                      key={ps.id}
-                      type="button"
-                      onClick={() => setPieceSet(ps.id)}
-                      className={`rounded-xl border-2 p-3 flex items-center gap-2 transition-all ${
-                        pieceSet === ps.id
-                          ? "border-green-700 bg-green-50"
-                          : "border-stone-200 hover:border-stone-300"
-                      }`}
-                    >
-                      <span className="text-xl" style={{ color: ps.whitePiece, textShadow: ps.whiteShadow }}>♔</span>
-                      <span className="text-xl" style={{ color: ps.blackPiece, textShadow: ps.blackShadow }}>♚</span>
-                      <div className="text-left min-w-0 ml-1">
-                        <p className="text-xs font-semibold text-stone-800 leading-tight truncate">{ps.displayName}</p>
-                        <p className="text-[10px] text-stone-400">{ps.emoji}</p>
-                      </div>
-                    </button>
-                  ))}
+              {/* ── Board theme picker ───────────────────────── */}
+              <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 20, overflow: "hidden" }}>
+                <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                  <p style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 12, color: S.text2, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                    Board Theme
+                  </p>
+                </div>
+                <div style={{ padding: 12, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  {Object.values(BOARD_THEMES).map(t => {
+                    const selected = boardTheme === t.id
+                    return (
+                      <button
+                        key={t.id} type="button"
+                        onClick={() => setBoardTheme(t.id)}
+                        style={{
+                          borderRadius: 12, padding: "10px 12px",
+                          background: selected ? "rgba(16,185,129,0.08)" : "rgba(255,255,255,0.03)",
+                          border: `2px solid ${selected ? S.green : "rgba(255,255,255,0.07)"}`,
+                          cursor: "pointer", textAlign: "left", transition: "all 0.15s",
+                          display: "flex", alignItems: "center", gap: 10,
+                        }}
+                      >
+                        {/* Mini board preview */}
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", width: 32, height: 32, borderRadius: 6, overflow: "hidden", flexShrink: 0 }}>
+                          {Array.from({ length: 16 }, (_, i) => (
+                            <div key={i} style={{ background: (Math.floor(i / 4) + i) % 2 === 0 ? t.lightSquare : t.darkSquare }} />
+                          ))}
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <p style={{ fontSize: 12, fontWeight: 600, color: selected ? S.text : S.text2, fontFamily: "var(--cc-font-display)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {t.displayName}
+                          </p>
+                          <p style={{ fontSize: 10, color: S.text3 }}>{t.emoji}</p>
+                        </div>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 
-              {/* Board orientation */}
-              <div className="bg-white rounded-2xl border border-stone-200 p-4 shadow-sm">
-                <h2 className="font-bold text-stone-800 text-sm mb-3">Default Board Orientation</h2>
-                <div className="grid grid-cols-2 gap-2">
+              {/* ── Piece style picker ───────────────────────── */}
+              <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 20, overflow: "hidden" }}>
+                <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                  <p style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 12, color: S.text2, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                    Piece Style
+                  </p>
+                </div>
+                <div style={{ padding: 12, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  {Object.values(PIECE_SETS).map(ps => {
+                    const selected = pieceSet === ps.id
+                    return (
+                      <button
+                        key={ps.id} type="button"
+                        onClick={() => setPieceSet(ps.id)}
+                        style={{
+                          borderRadius: 12, padding: "10px 14px",
+                          background: selected ? "rgba(16,185,129,0.08)" : "rgba(255,255,255,0.03)",
+                          border: `2px solid ${selected ? S.green : "rgba(255,255,255,0.07)"}`,
+                          cursor: "pointer", textAlign: "left", transition: "all 0.15s",
+                          display: "flex", alignItems: "center", gap: 8,
+                        }}
+                      >
+                        <span style={{ fontSize: 20, color: ps.whitePiece, textShadow: ps.whiteShadow }}>♔</span>
+                        <span style={{ fontSize: 20, color: ps.blackPiece, textShadow: ps.blackShadow }}>♚</span>
+                        <div style={{ minWidth: 0 }}>
+                          <p style={{ fontSize: 12, fontWeight: 600, color: selected ? S.text : S.text2, fontFamily: "var(--cc-font-display)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {ps.displayName}
+                          </p>
+                          <p style={{ fontSize: 10, color: S.text3 }}>{ps.emoji}</p>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* ── Board orientation ────────────────────────── */}
+              <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 20, overflow: "hidden" }}>
+                <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                  <p style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 12, color: S.text2, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                    Board Orientation
+                  </p>
+                </div>
+                <div style={{ padding: 12, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                   {[
                     { label: "Play as White", sub: "Pawns move up ↑", value: false },
                     { label: "Play as Black", sub: "Pawns move down ↓", value: true  },
-                  ].map(opt => (
-                    <button
-                      key={String(opt.value)}
-                      type="button"
-                      onClick={() => setBoardFlipped(opt.value)}
-                      className={`rounded-xl border-2 p-3 text-left transition-all ${
-                        boardFlipped === opt.value
-                          ? "border-green-700 bg-green-50"
-                          : "border-stone-200 hover:border-stone-300"
-                      }`}
-                    >
-                      <p className="text-xs font-semibold text-stone-800">{opt.label}</p>
-                      <p className="text-[10px] text-stone-400 mt-0.5">{opt.sub}</p>
-                    </button>
-                  ))}
+                  ].map(opt => {
+                    const selected = boardFlipped === opt.value
+                    return (
+                      <button
+                        key={String(opt.value)} type="button"
+                        onClick={() => setBoardFlipped(opt.value)}
+                        style={{
+                          borderRadius: 12, padding: "12px 14px",
+                          background: selected ? "rgba(16,185,129,0.08)" : "rgba(255,255,255,0.03)",
+                          border: `2px solid ${selected ? S.green : "rgba(255,255,255,0.07)"}`,
+                          cursor: "pointer", textAlign: "left", transition: "all 0.15s",
+                        }}
+                      >
+                        <p style={{ fontSize: 12, fontWeight: 600, color: selected ? S.text : S.text2, fontFamily: "var(--cc-font-display)" }}>
+                          {opt.label}
+                        </p>
+                        <p style={{ fontSize: 10, color: S.text3, marginTop: 3 }}>{opt.sub}</p>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 
+              {/* ── Save feedback ────────────────────────────── */}
               {saveMsg && (
-                <div className={`rounded-xl px-4 py-3 text-sm font-medium ${saveMsg.startsWith("Error") ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}>
+                <div style={{
+                  borderRadius: 14, padding: "12px 16px",
+                  background: saveMsg.startsWith("Error") ? "rgba(248,113,113,0.08)" : "rgba(16,185,129,0.08)",
+                  border: `1px solid ${saveMsg.startsWith("Error") ? "rgba(248,113,113,0.2)" : "rgba(16,185,129,0.2)"}`,
+                  color: saveMsg.startsWith("Error") ? "#F87171" : S.green,
+                  fontSize: 13, fontWeight: 600, textAlign: "center",
+                  fontFamily: "var(--cc-font-display)",
+                }}>
                   {saveMsg}
                 </div>
               )}
 
+              {/* ── Save button ──────────────────────────────── */}
               <button
                 type="submit" disabled={saving}
-                className="w-full bg-green-800 text-white rounded-xl py-3 text-sm font-bold hover:bg-green-700 disabled:opacity-50 transition-colors"
+                style={{
+                  width: "100%", padding: "14px",
+                  background: saving ? "rgba(16,185,129,0.12)" : "linear-gradient(135deg, #0D8A5C, #10B981)",
+                  border: "none", borderRadius: 16,
+                  fontFamily: "var(--cc-font-display)", fontSize: 14, fontWeight: 800,
+                  color: saving ? S.green : "#fff",
+                  cursor: saving ? "not-allowed" : "pointer",
+                  letterSpacing: "0.05em",
+                  boxShadow: saving ? "none" : "0 4px 20px rgba(16,185,129,0.3)",
+                  transition: "all 0.15s",
+                }}
               >
                 {saving ? "Saving…" : "Save Changes"}
               </button>

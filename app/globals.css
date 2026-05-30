@@ -1,26 +1,128 @@
 @import "tailwindcss";
 
+/* ── ChessConnect Design System ─────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --cc-bg:         #070B17;
+  --cc-surface:    #0D1224;
+  --cc-card:       #121829;
+  --cc-card-hi:    #171E2E;
+  --cc-border:     rgba(255,255,255,0.06);
+  --cc-border-med: rgba(255,255,255,0.10);
+
+  --cc-text:    #F1F5F9;
+  --cc-text-2:  #94A3B8;
+  --cc-text-3:  #475569;
+  --cc-text-4:  #1E293B;
+
+  --cc-green:  #10B981;
+  --cc-gold:   #F0B429;
+  --cc-purple: #818CF8;
+  --cc-amber:  #F59E0B;
+  --cc-blue:   #60A5FA;
+  --cc-red:    #F87171;
+
+  --cc-font-display: 'Syne', sans-serif;
+  --cc-font-body:    'Outfit', sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  background: var(--cc-bg);
+  color: var(--cc-text);
+  font-family: var(--cc-font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ── Scrollbar ──────────────────────────────────────────── */
+::-webkit-scrollbar              { width: 3px; height: 3px; }
+::-webkit-scrollbar-track        { background: transparent; }
+::-webkit-scrollbar-thumb        { background: rgba(255,255,255,0.08); border-radius: 99px; }
+
+/* ── Animations ─────────────────────────────────────────── */
+@keyframes cc-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes cc-fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes cc-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+@keyframes cc-pulse {
+  0%, 100% { opacity: 0.7; }
+  50%       { opacity: 1; }
+}
+@keyframes cc-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-5px); }
+}
+@keyframes cc-pop {
+  0%   { transform: scale(0.88); opacity: 0; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+@keyframes cc-nav-glow {
+  0%, 100% { opacity: 0.85; }
+  50%       { opacity: 1; }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ── Page enter ─────────────────────────────────────────── */
+.cc-page {
+  animation: cc-fade-up 0.3s ease both;
+}
+
+/* ── Dark form inputs ───────────────────────────────────── */
+.cc-input {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #f1f5f9;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: var(--cc-font-body);
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+  appearance: none;
+}
+.cc-input:focus {
+  border-color: rgba(16,185,129,0.45);
+  background: rgba(255,255,255,0.06);
+}
+.cc-input[readonly], .cc-input:read-only {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+.cc-input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.5);
+}
+.cc-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  font-family: var(--cc-font-display);
+  margin-bottom: 6px;
+}
+
+/* ── Card hover lift ────────────────────────────────────── */
+.cc-lift {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.cc-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+}
+
+/* ── Nav tab tap feedback ───────────────────────────────── */
+.cc-nav-tab {
+  transition: opacity 0.15s;
+}
+.cc-nav-tab:active {
+  opacity: 0.7;
 }
