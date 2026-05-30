@@ -104,22 +104,19 @@ export default function JoinCoachPage() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 pb-20">
-      <header className="bg-green-900 text-white px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">♟</span>
-          <span className="font-bold text-lg">Join a Coach</span>
-        </div>
-        <button onClick={handleSignOut} className="text-sm text-green-200 hover:text-white">Sign out</button>
+    <div style={{ minHeight: "100vh", background: "#070B17", paddingBottom: 80 }}>
+      <header style={{ padding: "18px 16px 14px", background: "linear-gradient(180deg, #0D1224 0%, transparent 100%)", display: "flex", alignItems: "center", gap: 10, position: "sticky", top: 0, zIndex: 40 }}>
+        <span style={{ fontSize: 22 }}>👨‍🏫</span>
+        <span style={{ fontFamily: "var(--cc-font-display)", fontWeight: 800, fontSize: 19, color: "#F1F5F9", letterSpacing: "0.02em" }}>Join a Coach</span>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-6 space-y-5">
+      <main className="max-w-lg mx-auto px-4 py-4 space-y-4">
         {loading ? (
           <div className="flex justify-center py-24">
             <div className="w-8 h-8 border-4 border-green-800 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : !playerId ? (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center">
+          <div style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 20, padding: 24, textAlign: "center" }}>
             <span className="text-3xl">⚠️</span>
             <p className="mt-3 text-amber-800 font-medium">No player profile found</p>
             <p className="text-sm text-amber-700 mt-1">Ask your club or school admin to create your player profile first.</p>
@@ -128,20 +125,20 @@ export default function JoinCoachPage() {
           <>
             {/* Current coaches */}
             {links.length > 0 && (
-              <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
-                <div className="px-4 py-3 border-b border-stone-100">
-                  <h2 className="font-bold text-stone-800">My Coaches</h2>
+              <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, overflow: "hidden" }}>
+                <div style={{ padding: "13px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                  <p style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 13, color: "#F1F5F9" }}>My Coaches</p>
                 </div>
                 {links.map((l, i) => (
-                  <div key={l.id} className={`flex items-center gap-3 px-4 py-3 ${i < links.length - 1 ? "border-b border-stone-50" : ""}`}>
-                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-lg flex-shrink-0">
+                  <div key={l.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: i < links.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
                       👨‍🏫
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-stone-800 truncate">
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: "#F1F5F9", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {l.coaches?.profiles?.full_name ?? "Coach"}
                       </p>
-                      <p className="text-xs text-stone-400 mt-0.5">
+                      <p style={{ fontSize: 11, color: "#475569", marginTop: 2 }}>
                         Via {l.linked_via ?? "direct"} · {new Date(l.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                       </p>
                     </div>
@@ -154,10 +151,10 @@ export default function JoinCoachPage() {
             )}
 
             {/* Join by invite code */}
-            <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-4 space-y-3">
+            <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
               <div>
-                <h2 className="font-bold text-stone-800">Enter Invite Code</h2>
-                <p className="text-xs text-stone-400 mt-0.5">Ask your coach for their invite code — it looks like GUILD-KNIGHT-402.</p>
+                <p style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, color: "#F1F5F9", fontSize: 15 }}>Enter Invite Code</p>
+                <p style={{ fontSize: 12, color: "#475569", marginTop: 4 }}>Ask your coach for their invite code — it looks like GUILD-KNIGHT-402.</p>
               </div>
 
               <input
@@ -166,7 +163,8 @@ export default function JoinCoachPage() {
                 onChange={e => setCode(e.target.value.toUpperCase())}
                 onKeyDown={e => { if (e.key === "Enter") handleJoin() }}
                 placeholder="GUILD-KNIGHT-402"
-                className="w-full rounded-xl border border-stone-200 px-3 py-2.5 text-sm font-mono outline-none focus:ring-2 focus:ring-green-700 uppercase tracking-widest"
+                className="cc-input"
+                style={{ fontFamily: "monospace", letterSpacing: "0.12em", textTransform: "uppercase" }}
                 maxLength={24}
                 disabled={joining}
               />
@@ -174,23 +172,23 @@ export default function JoinCoachPage() {
               <button
                 onClick={handleJoin}
                 disabled={joining || !code.trim()}
-                className="w-full py-2.5 bg-green-800 text-white text-sm font-bold rounded-xl hover:bg-green-700 disabled:opacity-40 transition-colors"
+                style={{ width: "100%", padding: "12px", background: "linear-gradient(135deg, #0D8A5C, #10B981)", border: "none", borderRadius: 14, fontFamily: "var(--cc-font-display)", fontSize: 14, fontWeight: 800, color: "#fff", cursor: "pointer", opacity: (joining || !code.trim()) ? 0.4 : 1, boxShadow: "0 4px 16px rgba(16,185,129,0.25)" }}
               >
                 {joining ? "Connecting…" : "Join Coach"}
               </button>
 
               {msg && (
-                <div className={`px-4 py-3 rounded-xl text-sm font-medium ${msg.ok ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+                <div style={{ padding: "12px 16px", borderRadius: 12, fontSize: 13, fontWeight: 600, background: msg.ok ? "rgba(16,185,129,0.08)" : "rgba(248,113,113,0.08)", border: `1px solid ${msg.ok ? "rgba(16,185,129,0.2)" : "rgba(248,113,113,0.2)"}`, color: msg.ok ? "#10B981" : "#F87171" }}>
                   {msg.text}
                 </div>
               )}
             </div>
 
             {links.length === 0 && (
-              <div className="bg-stone-50 rounded-2xl border border-dashed border-stone-300 p-8 text-center">
-                <span className="text-4xl">👨‍🏫</span>
-                <p className="mt-3 text-stone-500 text-sm font-medium">No coaches yet</p>
-                <p className="text-xs text-stone-400 mt-1">Enter your coach's invite code above to connect.</p>
+              <div style={{ background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.08)", borderRadius: 20, padding: 32, textAlign: "center" }}>
+                <span style={{ fontSize: 40 }}>👨‍🏫</span>
+                <p style={{ fontFamily: "var(--cc-font-display)", color: "#475569", fontWeight: 600, marginTop: 12 }}>No coaches yet</p>
+                <p style={{ fontSize: 12, color: "#334155", marginTop: 6 }}>Enter your coach's invite code above to connect.</p>
               </div>
             )}
           </>

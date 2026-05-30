@@ -133,7 +133,7 @@ export default function AssignmentWorkspacePage({ params }: { params: Promise<{ 
   }
 
   if (error) return (
-    <div className="min-h-screen flex items-center justify-center bg-stone-50 px-4">
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#070B17", padding: "0 16px" }}>
       <div className="text-center">
         <span className="text-4xl">⚠️</span>
         <p className="mt-3 text-stone-700 font-medium">{error}</p>
@@ -143,8 +143,8 @@ export default function AssignmentWorkspacePage({ params }: { params: Promise<{ 
   )
 
   if (!data) return (
-    <div className="min-h-screen flex items-center justify-center bg-stone-50">
-      <div className="w-8 h-8 border-4 border-green-800 border-t-transparent rounded-full animate-spin" />
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#070B17" }}>
+      <div style={{ width: 36, height: 36, border: "3px solid #10B981", borderTopColor: "transparent", borderRadius: "50%", animation: "cc-spin 0.9s linear infinite" }} />
     </div>
   )
 
@@ -152,19 +152,19 @@ export default function AssignmentWorkspacePage({ params }: { params: Promise<{ 
   const progress     = Math.round((idx / data.total_exercises) * 100)
 
   if (finished) return (
-    <div className="min-h-screen flex items-center justify-center bg-stone-50 px-4">
-      <div className="bg-white rounded-2xl border border-stone-200 p-8 max-w-sm w-full text-center shadow-sm">
-        <span className="text-5xl">🏆</span>
-        <h2 className="mt-4 text-xl font-bold text-stone-900">Session Complete!</h2>
-        <p className="text-stone-500 mt-2 text-sm">
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#070B17", padding: "0 16px" }}>
+      <div style={{ background: "#121829", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 24, padding: 32, maxWidth: 384, width: "100%", textAlign: "center" }}>
+        <span style={{ fontSize: 52 }}>🏆</span>
+        <h2 style={{ fontFamily: "var(--cc-font-display)", fontWeight: 800, fontSize: 22, color: "#F1F5F9", marginTop: 16 }}>Mission Complete!</h2>
+        <p style={{ color: "#64748B", marginTop: 8, fontSize: 14 }}>
           {totalSolved} of {data.total_exercises} puzzles solved
         </p>
-        <div className="mt-4 bg-stone-50 rounded-xl p-3 text-left space-y-1">
-          <p className="text-xs text-stone-400">Results synced to your coach ✓</p>
+        <div style={{ marginTop: 16, background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.15)", borderRadius: 12, padding: 12, textAlign: "left" }}>
+          <p style={{ fontSize: 12, color: "#475569" }}>Results synced to your coach ✓</p>
         </div>
         <a href="/assignments"
-           className="mt-6 block w-full bg-green-800 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-green-700 transition-colors">
-          Back to Assignments
+           style={{ marginTop: 20, display: "block", width: "100%", background: "linear-gradient(135deg, #0D8A5C, #10B981)", color: "#fff", borderRadius: 14, padding: "12px", fontSize: 14, fontWeight: 800, fontFamily: "var(--cc-font-display)", textDecoration: "none", boxShadow: "0 4px 16px rgba(16,185,129,0.25)" }}>
+          Back to Missions
         </a>
       </div>
     </div>
@@ -173,10 +173,10 @@ export default function AssignmentWorkspacePage({ params }: { params: Promise<{ 
   const isSolved = puzzle ? results[puzzle.puzzle_id] === "solved" : false
 
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col">
+    <div style={{ minHeight: "100vh", background: "#070B17", display: "flex", flexDirection: "column" }}>
       {/* Header */}
-      <header className="bg-green-900 text-white px-4 py-3 flex items-center justify-between">
-        <a href="/assignments" className="text-green-200 text-sm">← Back</a>
+      <header style={{ background: "linear-gradient(135deg, #0D1224, #121829)", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 40 }}>
+        <a href="/assignments" style={{ color: "#475569", fontSize: 13, textDecoration: "none" }}>← Missions</a>
         <span className="font-semibold text-sm truncate max-w-[200px]">{data.title}</span>
         <span className="text-green-200 text-sm">{idx + 1}/{data.total_exercises}</span>
       </header>

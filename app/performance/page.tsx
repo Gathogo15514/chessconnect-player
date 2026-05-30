@@ -129,27 +129,24 @@ export default function PerformancePage() {
     ? Math.round((stats.wins / stats.totalGames) * 100) : null
 
   return (
-    <div className="min-h-screen bg-stone-50 pb-20">
-      <header className="bg-green-900 text-white px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">♟</span>
-          <span className="font-bold text-lg">Performance</span>
-        </div>
-        <button onClick={handleSignOut} className="text-sm text-green-200 hover:text-white">Sign out</button>
+    <div style={{ minHeight: "100vh", background: "#070B17", paddingBottom: 80 }}>
+      <header style={{ padding: "18px 16px 14px", background: "linear-gradient(180deg, #0D1224 0%, transparent 100%)", display: "flex", alignItems: "center", gap: 10, position: "sticky", top: 0, zIndex: 40 }}>
+        <span style={{ fontSize: 22, filter: "drop-shadow(0 0 8px #10B981)" }}>📈</span>
+        <span style={{ fontFamily: "var(--cc-font-display)", fontWeight: 800, fontSize: 19, color: "#F1F5F9", letterSpacing: "0.02em" }}>Performance</span>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-6 space-y-5">
+      <main className="max-w-lg mx-auto px-4 py-4 space-y-4">
         {loading ? (
           <div className="flex justify-center py-24">
-            <div className="w-8 h-8 border-4 border-green-800 border-t-transparent rounded-full animate-spin" />
+            <div style={{ width: 36, height: 36, border: "3px solid #10B981", borderTopColor: "transparent", borderRadius: "50%", animation: "cc-spin 0.9s linear infinite" }} />
           </div>
         ) : (
           <>
             {/* Rating history (ChessConnect) */}
             {ratingHistory.length > 0 && (
-              <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
-                <div className="px-4 py-3 border-b border-stone-100">
-                  <h2 className="font-bold text-stone-800">Rating History (ChessConnect)</h2>
+              <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, overflow: "hidden" }}>
+                <div style={{ padding: "13px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                  <h2 style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 13, color: "#F1F5F9" }}>Rating History (ChessConnect)</h2>
                 </div>
                 <div className="px-4 py-4">
                   <div className="flex items-end gap-1.5 h-20">
@@ -177,7 +174,7 @@ export default function PerformancePage() {
             )}
 
             {/* Lichess username input */}
-            <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-4">
+            <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: 16 }}>
               <h2 className="font-bold text-stone-800 mb-3">Lichess Profile</h2>
               <div className="flex gap-2">
                 <input
@@ -186,12 +183,13 @@ export default function PerformancePage() {
                   onChange={e => setInputUser(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter") handleSave() }}
                   placeholder="Your Lichess username"
-                  className="flex-1 rounded-xl border border-stone-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-700"
+                  className="cc-input"
+                  style={{ flex: 1 }}
                 />
                 <button
                   onClick={handleSave}
                   disabled={saving || !inputUser.trim()}
-                  className="px-4 py-2 bg-green-800 text-white text-sm font-semibold rounded-xl hover:bg-green-700 disabled:opacity-40 transition-colors"
+                  style={{ padding: "8px 16px", background: "#0D8A5C", color: "#fff", fontSize: 13, fontWeight: 700, borderRadius: 12, border: "none", cursor: "pointer", opacity: (saving || !inputUser?.trim()) ? 0.4 : 1 }}
                 >
                   {saving ? "…" : "Save"}
                 </button>
@@ -207,15 +205,15 @@ export default function PerformancePage() {
             ) : stats ? (
               <>
                 {/* Win/loss/draw */}
-                <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
+                <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, overflow: "hidden" }}>
                   <div className="px-4 py-3 border-b border-stone-100 flex items-center justify-between">
                     <div>
-                      <h2 className="font-bold text-stone-800">{stats.username}</h2>
+                      <h2 style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 13, color: "#F1F5F9" }}>{stats.username}</h2>
                       {stats.title && <span className="text-xs font-bold text-amber-600">{stats.title}</span>}
                     </div>
                     <div className="flex items-center gap-1.5">
                       <div className={`w-2 h-2 rounded-full ${stats.online ? "bg-emerald-500" : "bg-stone-300"}`} />
-                      <span className="text-xs text-stone-400">{stats.online ? "Online" : "Offline"}</span>
+                      <span style={{ fontSize: 11, color: "#475569" }}>{stats.online ? "Online" : "Offline"}</span>
                     </div>
                   </div>
                   <div className="grid grid-cols-4 divide-x divide-stone-100">
@@ -235,20 +233,20 @@ export default function PerformancePage() {
 
                 {/* Ratings by format */}
                 {Object.keys(stats.ratings).length > 0 && (
-                  <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
-                    <div className="px-4 py-3 border-b border-stone-100">
-                      <h2 className="font-bold text-stone-800">Ratings by Format</h2>
+                  <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, overflow: "hidden" }}>
+                    <div style={{ padding: "13px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                      <h2 style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 13, color: "#F1F5F9" }}>Ratings by Format</h2>
                     </div>
                     {Object.entries(stats.ratings)
                       .sort((a, b) => b[1].games - a[1].games)
                       .map(([key, r], i, arr) => (
-                        <div key={key} className={`flex items-center justify-between px-4 py-3 ${i < arr.length - 1 ? "border-b border-stone-50" : ""}`}>
+                        <div key={key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 16px", borderBottom: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none" }}>
                           <div>
-                            <p className="text-sm font-semibold text-stone-800">{FORMAT_LABEL[key] ?? key}</p>
-                            <p className="text-xs text-stone-400">{r.games.toLocaleString()} games</p>
+                            <p style={{ fontSize: 13, fontWeight: 600, color: "#94A3B8" }}>{FORMAT_LABEL[key] ?? key}</p>
+                            <p style={{ fontSize: 11, color: "#475569" }}>{r.games.toLocaleString()} games</p>
                           </div>
                           <div className="text-right">
-                            <p className="text-lg font-bold text-stone-900">{r.rating}</p>
+                            <p style={{ fontSize: 18, fontWeight: 800, color: "#F1F5F9", fontFamily: "var(--cc-font-display)" }}>{r.rating}</p>
                             {r.prog !== undefined && r.prog !== 0 && (
                               <p className={`text-xs font-bold ${r.prog > 0 ? "text-emerald-600" : "text-red-500"}`}>
                                 {r.prog > 0 ? "+" : ""}{r.prog}
@@ -261,10 +259,10 @@ export default function PerformancePage() {
                 )}
               </>
             ) : lichessUser ? null : (
-              <div className="bg-white rounded-2xl border border-stone-200 p-8 text-center">
-                <span className="text-4xl">⚡</span>
-                <p className="mt-3 text-stone-600 font-medium">No Lichess account linked</p>
-                <p className="text-sm text-stone-400 mt-1">Enter your Lichess username above to see your online stats.</p>
+              <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: 32, textAlign: "center" }}>
+                <span style={{ fontSize: 40 }}>⚡</span>
+                <p style={{ fontFamily: "var(--cc-font-display)", color: "#64748B", fontWeight: 600, marginTop: 12 }}>No Lichess account linked</p>
+                <p style={{ fontSize: 12, color: "#334155", marginTop: 6 }}>Enter your Lichess username above to see your online stats.</p>
               </div>
             )}
           </>

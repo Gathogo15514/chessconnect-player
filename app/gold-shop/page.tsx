@@ -179,10 +179,10 @@ export default function GoldShopPage() {
             {/* Shop */}
             {tab === "shop" && (
               items.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-stone-200 p-12 text-center">
-                  <span className="text-4xl">🛒</span>
-                  <p className="mt-3 text-stone-600 font-medium">Shop is empty</p>
-                  <p className="text-sm text-stone-400 mt-1">Items will appear here once they are added.</p>
+                <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: 48, textAlign: "center" }}>
+                  <span style={{ fontSize: 40 }}>🛒</span>
+                  <p style={{ fontFamily: "var(--cc-font-display)", color: "#64748B", fontWeight: 600, marginTop: 12 }}>Shop is empty</p>
+                  <p style={{ fontSize: 12, color: "#334155", marginTop: 6 }}>Items will appear here once they are added.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -191,12 +191,12 @@ export default function GoldShopPage() {
                     const canAfford = (gp?.gold_balance ?? 0) >= item.gold_cost
                     const msg = buyMsg?.id === item.id ? buyMsg : null
                     return (
-                      <div key={item.id} className={`bg-white rounded-2xl border-2 p-4 shadow-sm ${RARITY_COLOR[item.rarity ?? "common"] ?? "border-stone-200"}`}>
+                      <div key={item.id} style={{ background: "#0D1224", border: `2px solid ${item.rarity === "legendary" ? "rgba(245,158,11,0.4)" : item.rarity === "rare" ? "rgba(129,140,248,0.3)" : item.rarity === "epic" ? "rgba(168,85,247,0.3)" : "rgba(255,255,255,0.08)"}`, borderRadius: 20, padding: 16 }}>
                         <div className="flex items-start gap-3">
                           <span className="text-3xl flex-shrink-0">{item.icon_emoji ?? "📦"}</span>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <p className="font-bold text-stone-900 text-sm">{item.name}</p>
+                              <p style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 14, color: "#F1F5F9" }}>{item.name}</p>
                               {item.rarity && item.rarity !== "common" && (
                                 <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">{item.rarity}</span>
                               )}
@@ -210,11 +210,7 @@ export default function GoldShopPage() {
                             <button
                               onClick={() => handleBuy(item)}
                               disabled={!canAfford || owned || buying === item.id}
-                              className={`mt-1 text-xs font-bold px-3 py-1.5 rounded-xl transition-colors ${
-                                owned ? "bg-stone-100 text-stone-400 cursor-not-allowed" :
-                                !canAfford ? "bg-stone-100 text-stone-400 cursor-not-allowed" :
-                                "bg-amber-500 text-white hover:bg-amber-400"
-                              }`}
+                              style={{ marginTop: 6, fontSize: 11, fontWeight: 700, padding: "5px 12px", borderRadius: 10, border: "none", cursor: (owned || !canAfford) ? "not-allowed" : "pointer", background: (owned || !canAfford) ? "rgba(255,255,255,0.06)" : "#F59E0B", color: (owned || !canAfford) ? "#334155" : "#fff", opacity: buying === item.id ? 0.6 : 1 }}
                             >
                               {buying === item.id ? "…" : owned ? "Owned" : !canAfford ? "Need more 🪙" : "Buy"}
                             </button>
@@ -233,11 +229,11 @@ export default function GoldShopPage() {
             {/* History */}
             {tab === "history" && (
               txHistory.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-stone-200 p-10 text-center">
-                  <p className="text-stone-400 text-sm">No transactions yet</p>
+                <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: 40, textAlign: "center" }}>
+                  <p style={{ color: "#475569", fontSize: 13 }}>No transactions yet</p>
                 </div>
               ) : (
-                <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm">
+                <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, overflow: "hidden" }}>
                   {txHistory.map((tx, i) => (
                     <div key={i} className={`flex items-center justify-between px-4 py-3 ${i < txHistory.length - 1 ? "border-b border-stone-50" : ""}`}>
                       <div className="min-w-0">

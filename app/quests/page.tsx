@@ -192,8 +192,7 @@ function PuzzleModal({ node, playerId, themeId, pieceSetId, onClose }: {
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
       style={{ background: "rgba(0,0,0,0.75)" }}
       onClick={() => onClose(false)}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden"
-        style={{ position: "relative" }}
+      <div style={{ background: "#121829", borderRadius: 20, boxShadow: "0 24px 60px rgba(0,0,0,0.6)", width: "100%", maxWidth: 384, overflow: "hidden", position: "relative" }}
         onClick={e => e.stopPropagation()}>
         <div style={{ background: headerBg }} className="px-4 py-3 flex items-center justify-between">
           <div>
@@ -235,12 +234,12 @@ function PuzzleModal({ node, playerId, themeId, pieceSetId, onClose }: {
         <div className="p-4 flex flex-col items-center" style={{ position: "relative" }}>
           {result ? (
             <div className="rounded-xl py-8 text-center w-full"
-              style={{ background: isBoss ? "#fef2f2" : "#f0fdf4" }}>
+              style={{ background: isBoss ? "rgba(248,113,113,0.08)" : "rgba(16,185,129,0.08)" }}>
               <span className="text-5xl">{isBoss ? "⚔️" : "🎉"}</span>
-              <p className="mt-3 font-bold" style={{ color: isBoss ? "#b91c1c" : "#15803d" }}>
+              <p className="mt-3 font-bold" style={{ color: isBoss ? "#F87171" : "#10B981" }}>
                 {isBoss ? "Boss Defeated!" : "Brilliant!"}
               </p>
-              <p className="text-xs text-stone-400 mt-1">+{node.xp_reward} XP earned</p>
+              <p style={{ fontSize: 12, color: "#475569", marginTop: 4 }}>+{node.xp_reward} XP earned</p>
             </div>
           ) : node.fen_position && node.solution_moves ? (
             <>
@@ -318,7 +317,7 @@ function CampaignTrail({ assignment, level, compSet, onNodeClick }: {
   }, "")
 
   return (
-    <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden mb-5">
+    <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 20, overflow: "hidden", marginBottom: 20 }}>
       {/* Campaign header */}
       <div style={{ background: "linear-gradient(135deg, #14532d, #166534)" }} className="px-4 py-4">
         <div className="flex items-center gap-3">
@@ -347,7 +346,7 @@ function CampaignTrail({ assignment, level, compSet, onNodeClick }: {
             style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
             {pathD && (
               <path d={pathD} fill="none"
-                stroke="#d1fae5" strokeWidth={3} strokeDasharray="6 4" />
+                stroke="rgba(16,185,129,0.25)" strokeWidth={3} strokeDasharray="6 4" />
             )}
           </svg>
 
@@ -401,7 +400,7 @@ function CampaignTrail({ assignment, level, compSet, onNodeClick }: {
                   }}>
                     <p style={{
                       fontSize: 11, fontWeight: 600, lineHeight: 1.2,
-                      color: done ? "#6b7280" : locked ? "#9ca3af" : isCurrent ? "#92400e" : "#1f2937",
+                      color: done ? "#475569" : locked ? "#1E293B" : isCurrent ? "#F59E0B" : "#94A3B8",
                       textDecoration: done ? "line-through" : undefined,
                     }}>
                       {n.title}
@@ -419,8 +418,8 @@ function CampaignTrail({ assignment, level, compSet, onNodeClick }: {
       </div>
 
       {expires_at && (
-        <div className="px-4 py-2 bg-stone-50 border-t border-stone-100">
-          <p className="text-[10px] text-stone-400">
+        <div style={{ padding: "8px 16px", background: "rgba(255,255,255,0.02)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+          <p style={{ fontSize: 10, color: "#334155" }}>
             Expires {new Date(expires_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
           </p>
         </div>
@@ -513,7 +512,7 @@ export default function QuestsPage() {
   }
 
   return (
-    <div className="min-h-screen pb-20" style={{ background: "#f8fafc" }}>
+    <div className="min-h-screen pb-20" style={{ background: "#070B17" }}>
       {activeNode && playerId && (
         <PuzzleModal
           node={activeNode} playerId={playerId}
@@ -561,10 +560,10 @@ export default function QuestsPage() {
                 { icon: "🪙", label: "Gold",   value: gold,           color: "#f59e0b" },
                 { icon: "🔥", label: "Streak", value: `${streak}d`,   color: "#f97316" },
               ].map((s, i) => (
-                <div key={i} className="bg-white rounded-2xl border border-stone-200 p-3 text-center shadow-sm">
+                <div key={i} style={{ background: "#0D1224", border: `1px solid ${s.color}25`, borderRadius: 18, padding: "14px 10px", textAlign: "center" }}>
                   <span className="text-xl">{s.icon}</span>
-                  <p className="text-base font-bold mt-1" style={{ color: s.color }}>{s.value}</p>
-                  <p className="text-[10px] text-stone-400 uppercase tracking-wide font-medium">{s.label}</p>
+                  <p style={{ fontFamily: "var(--cc-font-display)", fontSize: 18, fontWeight: 800, marginTop: 6, color: s.color }}>{s.value}</p>
+                  <p style={{ fontFamily: "var(--cc-font-display)", fontSize: 9, color: "#334155", textTransform: "uppercase", letterSpacing: "0.09em", marginTop: 4, fontWeight: 700 }}>{s.label}</p>
                 </div>
               ))}
             </div>
@@ -589,10 +588,10 @@ export default function QuestsPage() {
 
             {/* Campaign trails */}
             {assignments.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-stone-200 p-12 text-center">
-                <span className="text-5xl">🗺️</span>
-                <p className="mt-3 text-stone-600 font-bold">No active quests</p>
-                <p className="text-sm text-stone-400 mt-1">Your coach will assign campaigns here.</p>
+              <div style={{ background: "#0D1224", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: 48, textAlign: "center" }}>
+                <span style={{ fontSize: 52 }}>🗺️</span>
+                <p style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, color: "#64748B", marginTop: 14 }}>No active quests</p>
+                <p style={{ fontSize: 13, color: "#334155", marginTop: 6 }}>Your coach will assign campaigns here.</p>
               </div>
             ) : (
               assignments.map(a => (
