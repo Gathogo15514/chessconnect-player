@@ -448,8 +448,6 @@ const LIBRARY_SECTIONS: { type: string; label: string; icon: string }[] = [
   { type: "system",   label: "System",    icon: "🌐" },
 ]
 
-const MAIN_API = process.env.NEXT_PUBLIC_MAIN_API_URL ?? ""
-
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function QuestsPage() {
   const router = useRouter()
@@ -520,16 +518,20 @@ export default function QuestsPage() {
     try {
       const supabase = createClient()
       const [libRes, enrollRes] = await Promise.all([
-        fetch(`${MAIN_API}/api/quests/campaigns?public=true`),
+        // Query Supabase directly — no main API needed (RLS allows public campaigns)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase.from("quest_campaigns") as any)
+          .select("id, title, description, cover_emoji, curriculum_type, difficulty_from, difficulty_to, estimated_minutes, quest_nodes(id)")
+          .eq("is_public", true)
+          .eq("is_active", true)
+          .order("curriculum_type")
+          .order("title"),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (supabase.from("player_quest_enrollments") as any)
           .select("campaign_id")
           .eq("player_id", pid),
       ])
-      if (libRes.ok) {
-        const campaigns: LibraryCampaign[] = await libRes.json()
-        setLibrary(campaigns)
-      }
+      setLibrary(libRes.data ?? [])
       const enrolled = new Set<string>((enrollRes.data ?? []).map((e: { campaign_id: string }) => e.campaign_id))
       setEnrolledIds(enrolled)
     } catch { /* silent */ }
@@ -537,25 +539,26 @@ export default function QuestsPage() {
   }
 
   async function handleEnroll(campaignId: string) {
-    if (enrolling || enrolledIds.has(campaignId)) return
+    if (enrolling || enrolledIds.has(campaignId) || !playerId) return
     setEnrolling(campaignId)
-    const supabase = createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) { router.replace("/login"); return }
     try {
-      const res = await fetch(`${MAIN_API}/api/quests/enroll`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-        body: JSON.stringify({ campaignId }),
-      })
-      if (res.ok) {
-        setEnrolledIds(prev => new Set([...prev, campaignId]))
-        // Refresh assignments so the new campaign appears in My Quests
-        if (playerId) {
-          const client = createClient()
-          await loadData(client, playerId)
-        }
+      const supabase = createClient()
+      // Upsert enrollment record
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from("player_quest_enrollments") as any)
+        .upsert({ player_id: playerId, campaign_id: campaignId }, { onConflict: "player_id,campaign_id" })
+      // Create quest_assignment if one doesn't exist yet
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: existing } = await (supabase.from("quest_assignments") as any)
+        .select("id").eq("player_id", playerId).eq("campaign_id", campaignId).maybeSingle()
+      if (!existing) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase.from("quest_assignments") as any)
+          .insert({ campaign_id: campaignId, player_id: playerId, delivery_type: "standard", status: "active", assigned_at: new Date().toISOString() })
       }
+      setEnrolledIds(prev => new Set([...prev, campaignId]))
+      const client = createClient()
+      await loadData(client, playerId)
     } catch { /* silent */ }
     setEnrolling(null)
   }
