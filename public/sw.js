@@ -1,4 +1,4 @@
-const CACHE = "cc-player-v1"
+const CACHE = "cc-player-v3"
 
 const PRECACHE = ["/", "/assignments", "/login", "/offline"]
 
