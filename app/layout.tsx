@@ -3,13 +3,13 @@ import "./globals.css"
 
 export const metadata: Metadata = {
   title:       "ChessConnect Player",
-  description: "Your chess training portal — missions, puzzles, and progress.",
+  description: "Your personal chess training portal.",
   manifest:    "/manifest.json",
-  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "ChessConnect" },
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "ChessConnect" },
 }
 
 export const viewport: Viewport = {
-  themeColor:   "#09090B",
+  themeColor:   "#1B5E35",
   width:        "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -28,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon"             href="/icons/icon-192.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
       </head>
-      <body style={{ background: "#09090B", minHeight: "100vh" }}>
+      <body style={{ background: "#F5F4EF", minHeight: "100vh" }}>
         {children}
         <script dangerouslySetInnerHTML={{ __html: `
           if ('serviceWorker' in navigator) {

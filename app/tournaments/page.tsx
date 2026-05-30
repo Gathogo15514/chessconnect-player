@@ -1,298 +1,112 @@
 "use client"
-
 import { useEffect, useState } from "react"
 import { useRouter }           from "next/navigation"
 import { createClient }        from "@/lib/supabase/client"
 import { BottomNav }           from "@/components/BottomNav"
 import { fmtDate }             from "@/lib/dates"
 
-type Tournament = {
-  id:               string
-  title:            string
-  event_type?:      string | null
-  status:           string
-  start_date:       string
-  end_date?:        string | null
-  venue_name?:      string | null
-  entry_fee_kes?:   number | null
-  is_fide_rated?:   boolean | null
-  format?:          string | null
-  participant_count?: number | null
-  max_participants?:  number | null
-  counties?:          { name: string } | null
-  tournament_types?:  { label: string } | null
-}
-
-type Registration = {
-  id:              string
-  status:          string
-  payment_status:  string
-  seeding_number?: number | null
-  rating_at_reg?:  number | null
-  created_at:      string
-  tournaments:     Tournament | null
-}
-
-const REG_STATUS: Record<string, { color: string; glow: string }> = {
-  confirmed:    { color: "#10B981", glow: "rgba(16,185,129,0.12)"  },
-  pending:      { color: "#F59E0B", glow: "rgba(245,158,11,0.12)"  },
-  waitlisted:   { color: "#60A5FA", glow: "rgba(96,165,250,0.12)"  },
-  withdrawn:    { color: "#64748B", glow: "rgba(100,116,139,0.10)" },
-  disqualified: { color: "#F87171", glow: "rgba(248,113,113,0.10)" },
-}
-
-const S = {
-  bg:      "#070B17",
-  surface: "#0D1224",
-  card:    "#121829",
-  border:  "rgba(255,255,255,0.06)",
-  text:    "#F1F5F9",
-  text2:   "#64748B",
-  text3:   "#334155",
-  gold:    "#F0B429",
-  amber:   "#F59E0B",
-  green:   "#10B981",
-  purple:  "#818CF8",
-}
-
-const TABS: { key: "upcoming" | "past" | "withdrawn"; label: string; icon: string }[] = [
-  { key: "upcoming",  label: "Upcoming",  icon: "🏆" },
-  { key: "past",      label: "Past",      icon: "📜" },
-  { key: "withdrawn", label: "Withdrawn", icon: "↩" },
-]
+type Tournament={id:string;title:string;event_type?:string|null;status:string;start_date:string;end_date?:string|null;venue_name?:string|null;entry_fee_kes?:number|null;is_fide_rated?:boolean|null;format?:string|null;participant_count?:number|null;max_participants?:number|null;counties?:{name:string}|null;tournament_types?:{label:string}|null}
+type Registration={id:string;status:string;payment_status:string;seeding_number?:number|null;rating_at_reg?:number|null;created_at:string;tournaments:Tournament|null}
+const RS:Record<string,{color:string;bg:string}>={confirmed:{color:"#16A34A",bg:"rgba(22,163,74,0.08)"},pending:{color:"#D97706",bg:"rgba(217,119,6,0.08)"},waitlisted:{color:"#2563EB",bg:"rgba(37,99,235,0.08)"},withdrawn:{color:"#9CA3AF",bg:"rgba(156,163,175,0.08)"},disqualified:{color:"#DC2626",bg:"rgba(220,38,38,0.08)"}}
 
 export default function TournamentsPage() {
-  const router = useRouter()
-  const [regs,    setRegs]    = useState<Registration[]>([])
-  const [loading, setLoading] = useState(true)
-  const [tab,     setTab]     = useState<"upcoming" | "past" | "withdrawn">("upcoming")
+  const router=useRouter()
+  const [regs,setRegs]=useState<Registration[]>([])
+  const [loading,setLoading]=useState(true)
+  const [tab,setTab]=useState<"upcoming"|"past"|"withdrawn">("upcoming")
 
-  useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session) { router.replace("/login"); return }
-
+  useEffect(()=>{
+    const supabase=createClient()
+    supabase.auth.getSession().then(async({data:{session}})=>{
+      if(!session){router.replace("/login");return}
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: player } = await (supabase.from("players") as any)
-        .select("id").eq("profile_id", session.user.id).maybeSingle()
-      if (!player) { setLoading(false); return }
-
+      const{data:player}=await(supabase.from("players")as any).select("id").eq("profile_id",session.user.id).maybeSingle()
+      if(!player){setLoading(false);return}
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase.from("tournament_registrations") as any)
-        .select(`
-          id, status, payment_status, seeding_number, rating_at_reg, created_at,
-          tournaments(id, title, event_type, status, start_date, end_date,
-            venue_name, entry_fee_kes, is_fide_rated, format,
-            participant_count, max_participants,
-            counties(name), tournament_types(label))
-        `)
-        .eq("player_id", player.id)
-        .order("created_at", { ascending: false })
-
-      setRegs(data ?? [])
-      setLoading(false)
+      const{data}=await(supabase.from("tournament_registrations")as any).select(`id,status,payment_status,seeding_number,rating_at_reg,created_at,tournaments(id,title,event_type,status,start_date,end_date,venue_name,entry_fee_kes,is_fide_rated,format,participant_count,max_participants,counties(name),tournament_types(label))`).eq("player_id",player.id).order("created_at",{ascending:false})
+      setRegs(data??[]);setLoading(false)
     })
-  }, [router])
+  },[router])
 
-  const today    = new Date()
-  const upcoming = regs.filter(r => {
-    if (!r.tournaments || ["withdrawn","disqualified"].includes(r.status)) return false
-    return new Date(r.tournaments.start_date) >= today || r.tournaments.status === "in_progress"
-  })
-  const past = regs.filter(r => {
-    if (!r.tournaments || ["withdrawn","disqualified"].includes(r.status)) return false
-    return new Date(r.tournaments.start_date) < today && r.tournaments.status !== "in_progress"
-  })
-  const withdrawn = regs.filter(r => ["withdrawn","disqualified"].includes(r.status))
-  const lists     = { upcoming, past, withdrawn }
-  const visible   = lists[tab] ?? []
+  const today=new Date()
+  const upcoming=regs.filter(r=>r.tournaments&&!["withdrawn","disqualified"].includes(r.status)&&(new Date(r.tournaments.start_date)>=today||r.tournaments.status==="in_progress"))
+  const past=regs.filter(r=>r.tournaments&&!["withdrawn","disqualified"].includes(r.status)&&new Date(r.tournaments.start_date)<today&&r.tournaments.status!=="in_progress")
+  const withdrawn=regs.filter(r=>["withdrawn","disqualified"].includes(r.status))
+  const lists={upcoming,past,withdrawn}
+  const visible=lists[tab]??[]
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)", paddingBottom: 80 }}>
-      <style>{`
-        @keyframes cc-spin    { to { transform: rotate(360deg); } }
-        @keyframes cc-fade-up { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes cc-live    { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
-      `}</style>
-
-      {/* Header */}
-      <header style={{ padding:"16px 18px 12px", background:"rgba(9,9,11,0.95)", borderBottom:"1px solid rgba(232,197,71,0.1)", display:"flex", alignItems:"center", gap:10, position:"sticky", top:0, zIndex:40, backdropFilter:"blur(20px)" }}>
-        <span style={{ fontFamily:"serif", fontSize:20, color:"var(--gold)" }}>♚</span>
-        <span style={{ fontFamily:"var(--font-display)", fontSize:20, color:"var(--text)", letterSpacing:"0.08em" }}>TOURNAMENTS</span>
+    <div style={{minHeight:"100vh",background:"var(--bg)",paddingBottom:72}}>
+      <style>{`@keyframes cc-spin{to{transform:rotate(360deg)}} @keyframes cc-live{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
+      <header style={{background:"#1B5E35",padding:"16px 18px 16px",display:"flex",alignItems:"center",gap:10}}>
+        <span style={{fontFamily:"serif",fontSize:22,color:"#fff"}}>♚</span>
+        <div>
+          <h1 style={{fontFamily:"var(--font-display)",fontSize:22,color:"#fff",letterSpacing:"0.04em"}}>TOURNAMENTS</h1>
+          <p style={{fontSize:12,color:"rgba(255,255,255,0.6)",marginTop:1}}>{regs.length} registration{regs.length!==1?"s":""}</p>
+        </div>
       </header>
 
-      <main style={{ maxWidth: 480, margin: "0 auto", padding: "4px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
-        {loading ? (
-          <div style={{ display: "flex", justifyContent: "center", paddingTop: 80 }}>
-            <div style={{
-              width: 36, height: 36,
-              border: `3px solid ${S.gold}`, borderTopColor: "transparent",
-              borderRadius: "50%", animation: "cc-spin 0.9s linear infinite",
-            }} />
+      <main style={{maxWidth:480,margin:"0 auto",padding:"16px 16px 0",display:"flex",flexDirection:"column",gap:12}}>
+        {loading?(
+          <div style={{display:"flex",justifyContent:"center",paddingTop:60}}>
+            <div style={{width:32,height:32,border:"3px solid #1B5E35",borderTopColor:"transparent",borderRadius:"50%",animation:"cc-spin 0.8s linear infinite"}}/>
           </div>
-        ) : (
+        ):(
           <>
-            {/* ── Tabs ────────────────────────────────────────── */}
-            <div style={{
-              display: "flex", gap: 6,
-              background: "var(--card)", borderRadius: 16, padding: 5,
-              border: `1px solid ${S.border}`,
-              animation: "cc-fade-up 0.35s ease both",
-            }}>
-              {TABS.map(t => {
-                const active = tab === t.key
-                return (
-                  <button
-                    key={t.key}
-                    onClick={() => setTab(t.key)}
-                    style={{
-                      flex: 1, padding: "9px 4px",
-                      background: active ? S.card : "transparent",
-                      border: active ? `1px solid rgba(240,180,41,0.2)` : "1px solid transparent",
-                      borderRadius: 11,
-                      fontFamily: "var(--cc-font-display)", fontSize: 11, fontWeight: 700,
-                      color: active ? S.gold : S.text2,
-                      cursor: "pointer",
-                      transition: "all 0.15s",
-                      letterSpacing: "0.03em",
-                    }}
-                  >
-                    {t.icon} {t.label}
-                    <span style={{
-                      marginLeft: 4, fontSize: 10,
-                      color: active ? S.gold : S.text3,
-                    }}>
-                      ({lists[t.key].length})
-                    </span>
-                  </button>
-                )
-              })}
+            {/* Tabs */}
+            <div style={{display:"flex",background:"#fff",borderRadius:12,padding:4,border:"1px solid var(--border)",gap:2}}>
+              {(["upcoming","past","withdrawn"]as const).map(t=>(
+                <button key={t} onClick={()=>setTab(t)} style={{flex:1,padding:"8px 4px",borderRadius:9,border:"none",fontSize:12,fontWeight:tab===t?700:500,background:tab===t?"#1B5E35":"transparent",color:tab===t?"#fff":"var(--text-2)",cursor:"pointer",transition:"all 0.15s",letterSpacing:"0.01em"}}>
+                  {t.charAt(0).toUpperCase()+t.slice(1)} <span style={{opacity:.7}}>({lists[t].length})</span>
+                </button>
+              ))}
             </div>
 
-            {/* ── List ────────────────────────────────────────── */}
-            {visible.length === 0 ? (
-              <div style={{
-                background: "var(--card)", border: `1px solid ${S.border}`,
-                borderRadius: 20, padding: 48, textAlign: "center",
-              }}>
-                <span style={{ fontSize: 44 }}>🏆</span>
-                <p style={{ color: S.text2, fontWeight: 600, marginTop: 14, fontFamily: "var(--cc-font-display)" }}>
-                  {tab === "upcoming" ? "No upcoming tournaments" : tab === "past" ? "No past tournaments" : "No withdrawn registrations"}
-                </p>
-                <p style={{ color: S.text3, fontSize: 13, marginTop: 6 }}>
-                  Your registrations will appear here.
-                </p>
+            {visible.length===0?(
+              <div className="cc-card" style={{padding:40,textAlign:"center"}}>
+                <p style={{fontSize:32}}>🏆</p>
+                <p style={{fontWeight:600,color:"var(--text-2)",marginTop:10}}>{tab==="upcoming"?"No upcoming tournaments":tab==="past"?"No past tournaments":"No withdrawn registrations"}</p>
               </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, animation: "cc-fade-up 0.38s ease 0.05s both" }}>
-                {visible.map(r => {
-                  const t = r.tournaments
-                  if (!t) return null
-                  const daysUntil = Math.ceil((new Date(t.start_date).getTime() - today.getTime()) / 86400000)
-                  const isLive    = t.status === "in_progress"
-                  const rs        = REG_STATUS[r.status] ?? REG_STATUS.pending
-                  return (
-                    <div key={r.id} style={{
-                      background: "var(--card)",
-                      border: `1px solid ${isLive ? "rgba(245,158,11,0.3)" : S.border}`,
-                      borderRadius: 20, overflow: "hidden",
-                      boxShadow: isLive ? "0 0 20px rgba(245,158,11,0.08)" : "none",
-                    }}>
-                      {/* Card header */}
-                      <div style={{
-                        padding: "14px 16px 10px",
-                        borderBottom: "1px solid rgba(255,255,255,0.04)",
-                        display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10,
-                      }}>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          {isLive && (
-                            <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 5 }}>
-                              <span style={{
-                                width: 7, height: 7, borderRadius: "50%",
-                                background: S.amber, display: "inline-block",
-                                animation: "cc-live 1.2s ease-in-out infinite",
-                              }} />
-                              <span style={{
-                                fontFamily: "var(--cc-font-display)", fontSize: 10, fontWeight: 700,
-                                color: S.amber, letterSpacing: "0.1em",
-                              }}>
-                                LIVE NOW
-                              </span>
-                            </div>
-                          )}
-                          <p style={{
-                            fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 15,
-                            color: S.text, lineHeight: 1.3,
-                          }}>
-                            {t.title}
-                          </p>
-                          {t.tournament_types?.label && (
-                            <p style={{ color: S.text3, fontSize: 11, marginTop: 3 }}>
-                              {t.tournament_types.label}
-                            </p>
-                          )}
+            ):(
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                {visible.map(r=>{
+                  const t=r.tournaments;if(!t)return null
+                  const days=Math.ceil((new Date(t.start_date).getTime()-today.getTime())/86400000)
+                  const isLive=t.status==="in_progress"
+                  const rs=RS[r.status]??RS.pending
+                  return(
+                    <div key={r.id} className="cc-card" style={{overflow:"hidden"}}>
+                      <div style={{padding:"13px 16px",borderBottom:"1px solid var(--border)"}}>
+                        {isLive&&(
+                          <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:6}}>
+                            <span style={{width:7,height:7,borderRadius:"50%",background:"#16A34A",animation:"cc-live 1.2s ease-in-out infinite",display:"inline-block"}}/>
+                            <span style={{fontSize:11,fontWeight:700,color:"#16A34A",letterSpacing:"0.06em"}}>LIVE NOW</span>
+                          </div>
+                        )}
+                        <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:10}}>
+                          <div style={{flex:1,minWidth:0}}>
+                            <p style={{fontWeight:700,fontSize:15,color:"var(--text)"}}>{t.title}</p>
+                            {t.tournament_types?.label&&<p style={{fontSize:12,color:"var(--text-3)",marginTop:2}}>{t.tournament_types.label}</p>}
+                          </div>
+                          <span style={{fontSize:11,fontWeight:600,padding:"3px 9px",borderRadius:99,color:rs.color,background:rs.bg,border:`1px solid ${rs.color}25`,flexShrink:0,textTransform:"capitalize"}}>{r.status}</span>
                         </div>
-                        <span style={{
-                          fontFamily: "var(--cc-font-display)", fontSize: 10, fontWeight: 700,
-                          color: rs.color, background: rs.glow,
-                          border: `1px solid ${rs.color}30`,
-                          borderRadius: 20, padding: "4px 10px", flexShrink: 0,
-                          textTransform: "capitalize",
-                        }}>
-                          {r.status}
-                        </span>
                       </div>
-
-                      {/* Details grid */}
-                      <div style={{
-                        padding: "10px 16px 12px",
-                        display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5px 16px",
-                      }}>
-                        <span style={{ fontSize: 12, color: S.text2 }}>📅 {fmtDate(t.start_date)}</span>
-                        {t.venue_name && <span style={{ fontSize: 12, color: S.text2 }}>📍 {t.venue_name}</span>}
-                        {t.counties?.name && <span style={{ fontSize: 12, color: S.text2 }}>🗺 {t.counties.name}</span>}
-                        {t.format && <span style={{ fontSize: 12, color: S.text2 }}>⏱ {t.format}</span>}
-                        {t.entry_fee_kes != null && (
-                          <span style={{ fontSize: 12, color: S.text2 }}>💰 KES {t.entry_fee_kes.toLocaleString()}</span>
-                        )}
-                        {t.is_fide_rated && (
-                          <span style={{
-                            fontSize: 12, color: "#818CF8",
-                            fontFamily: "var(--cc-font-display)", fontWeight: 700,
-                          }}>
-                            ★ FIDE Rated
-                          </span>
-                        )}
-                        {r.rating_at_reg && <span style={{ fontSize: 12, color: S.text2 }}>Rating: {r.rating_at_reg}</span>}
-                        {r.seeding_number && <span style={{ fontSize: 12, color: S.text2 }}>Seed #{r.seeding_number}</span>}
+                      <div style={{padding:"10px 16px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"4px 12px"}}>
+                        <span style={{fontSize:12,color:"var(--text-2)"}}>📅 {fmtDate(t.start_date)}</span>
+                        {t.venue_name&&<span style={{fontSize:12,color:"var(--text-2)"}}>📍 {t.venue_name}</span>}
+                        {t.counties?.name&&<span style={{fontSize:12,color:"var(--text-2)"}}>🗺 {t.counties.name}</span>}
+                        {t.format&&<span style={{fontSize:12,color:"var(--text-2)"}}>⏱ {t.format}</span>}
+                        {t.entry_fee_kes!=null&&<span style={{fontSize:12,color:"var(--text-2)"}}>💰 KES {t.entry_fee_kes.toLocaleString()}</span>}
+                        {t.is_fide_rated&&<span style={{fontSize:12,color:"var(--blue)",fontWeight:600}}>★ FIDE Rated</span>}
+                        {r.seeding_number&&<span style={{fontSize:12,color:"var(--text-2)"}}>Seed #{r.seeding_number}</span>}
                       </div>
-
-                      {/* Footer */}
-                      <div style={{
-                        padding: "8px 16px 12px",
-                        borderTop: "1px solid rgba(255,255,255,0.03)",
-                        display: "flex", alignItems: "center", justifyContent: "space-between",
-                      }}>
-                        <span style={{
-                          fontFamily: "var(--cc-font-display)", fontSize: 10, fontWeight: 700,
-                          color: r.payment_status === "paid" ? S.green : S.amber,
-                          background: r.payment_status === "paid" ? "rgba(16,185,129,0.1)" : "rgba(245,158,11,0.1)",
-                          border: `1px solid ${r.payment_status === "paid" ? "rgba(16,185,129,0.2)" : "rgba(245,158,11,0.2)"}`,
-                          borderRadius: 20, padding: "3px 9px",
-                        }}>
-                          {r.payment_status === "paid" ? "✓ Paid" : r.payment_status}
+                      <div style={{padding:"8px 16px 12px",borderTop:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                        <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:99,color:r.payment_status==="paid"?"#16A34A":"#D97706",background:r.payment_status==="paid"?"rgba(22,163,74,0.08)":"rgba(217,119,6,0.08)",border:`1px solid ${r.payment_status==="paid"?"rgba(22,163,74,0.2)":"rgba(217,119,6,0.2)"}`}}>
+                          {r.payment_status==="paid"?"✓ Paid":r.payment_status}
                         </span>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          {daysUntil > 0 && daysUntil <= 14 && (
-                            <span style={{ fontSize: 12, color: S.amber, fontWeight: 600 }}>
-                              {daysUntil === 1 ? "Tomorrow" : `In ${daysUntil} days`}
-                            </span>
-                          )}
-                          {t.participant_count != null && (
-                            <span style={{ fontSize: 11, color: S.text3 }}>
-                              {t.participant_count}{t.max_participants ? `/${t.max_participants}` : ""} players
-                            </span>
-                          )}
+                        <div style={{display:"flex",alignItems:"center",gap:8}}>
+                          {days>0&&days<=14&&<span style={{fontSize:12,color:"var(--gold)",fontWeight:500}}>{days===1?"Tomorrow":`In ${days} days`}</span>}
+                          {t.participant_count!=null&&<span style={{fontSize:11,color:"var(--text-3)"}}>{t.participant_count}{t.max_participants?`/${t.max_participants}`:""} players</span>}
                         </div>
                       </div>
                     </div>
@@ -303,8 +117,7 @@ export default function TournamentsPage() {
           </>
         )}
       </main>
-
-      <BottomNav />
+      <BottomNav/>
     </div>
   )
 }

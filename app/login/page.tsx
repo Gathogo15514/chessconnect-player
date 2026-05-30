@@ -1,30 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-
-const PIECES = ["♔","♕","♖","♗","♘","♙","♚","♛","♜","♝","♞","♟"]
-
-type FloatingPiece = { id: number; piece: string; x: number; size: number; duration: number; delay: number; opacity: number }
-
-function useFloatingPieces(count = 14): FloatingPiece[] {
-  const [pieces, setPieces] = useState<FloatingPiece[]>([])
-  useEffect(() => {
-    setPieces(
-      Array.from({ length: count }, (_, i) => ({
-        id:       i,
-        piece:    PIECES[i % PIECES.length],
-        x:        Math.random() * 100,
-        size:     18 + Math.random() * 28,
-        duration: 12 + Math.random() * 16,
-        delay:    -Math.random() * 20,
-        opacity:  0.04 + Math.random() * 0.1,
-      }))
-    )
-  }, [count])
-  return pieces
-}
 
 export default function LoginPage() {
   const router = useRouter()
@@ -32,192 +10,183 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState<string | null>(null)
-  const [entered,  setEntered]  = useState(false)
-  const floats = useFloatingPieces(14)
 
   async function handleLogin(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault()
-    setLoading(true)
-    setError(null)
+    setLoading(true); setError(null)
     const supabase = createClient()
     const { error: err } = await supabase.auth.signInWithPassword({ email, password })
     if (err) { setError(err.message); setLoading(false); return }
-    setEntered(true)
-    setTimeout(() => {
-      router.refresh()
-      router.push("/dashboard")
-    }, 700)
+    router.refresh(); router.push("/dashboard")
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden flex items-center justify-center px-4"
-      style={{ background: "linear-gradient(160deg, #0f172a 0%, #0d2b14 50%, #1a0d2e 100%)" }}>
-
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#F5F4EF" }}>
       <style>{`
-        @keyframes floatUp {
-          0%   { transform: translateY(110vh) rotate(0deg); opacity: 0; }
-          5%   { opacity: 1; }
-          95%  { opacity: 1; }
-          100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
-        }
-        @keyframes portalPulse {
-          0%,100% { box-shadow: 0 0 40px #10b98133, 0 0 80px #10b98111, inset 0 0 40px #10b98108; }
-          50%      { box-shadow: 0 0 60px #10b98155, 0 0 120px #10b98122, inset 0 0 60px #10b98115; }
-        }
-        @keyframes gateOpen {
-          0%   { clip-path: inset(0 50% 0 50%); opacity: 0.3; }
-          100% { clip-path: inset(0 0% 0 0%); opacity: 1; }
-        }
-        @keyframes runeGlow {
-          0%,100% { opacity:0.3; text-shadow: 0 0 8px #10b981; }
-          50%      { opacity:0.9; text-shadow: 0 0 20px #10b981, 0 0 40px #10b981; }
-        }
-        .float-piece { position:absolute; bottom:-10vh; animation: floatUp linear infinite; pointer-events:none; }
-        .portal-ring { animation: portalPulse 3s ease-in-out infinite; }
-        .rune        { animation: runeGlow 2.5s ease-in-out infinite; display:inline-block; }
-        .gate-open   { animation: gateOpen 0.7s ease-out forwards; }
+        @keyframes cc-spin { to { transform: rotate(360deg); } }
+        input::placeholder { color: #9CA3AF; }
+        input:focus { border-color: #1B5E35 !important; box-shadow: 0 0 0 3px rgba(27,94,53,0.1) !important; outline: none; }
       `}</style>
 
-      {/* Floating pieces background */}
-      {floats.map(p => (
-        <span
-          key={p.id}
-          className="float-piece"
-          style={{
-            left: `${p.x}%`,
-            fontSize: p.size,
-            opacity: p.opacity,
-            animationDuration: `${p.duration}s`,
-            animationDelay:    `${p.delay}s`,
-            color: "#10b981",
-          }}
-        >
-          {p.piece}
-        </span>
-      ))}
+      {/* ── Mobile layout: stacked ──────────────── */}
+      {/* ── Desktop: side-by-side ──────────────── */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "row", minHeight: "100vh" }}>
 
-      {/* Portal ring */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="portal-ring" style={{
-          width: 480, height: 480, borderRadius: "50%",
-          border: "1px solid rgba(16,185,129,0.2)",
-        }} />
-      </div>
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        {/* Left panel — forest green brand side */}
         <div style={{
-          width: 360, height: 360, borderRadius: "50%",
-          border: "1px solid rgba(16,185,129,0.12)",
-        }} />
-      </div>
+          display: "none",
+          flex: "0 0 44%",
+          background: "#1B5E35",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          padding: "48px 44px",
+          position: "relative",
+          overflow: "hidden",
+        }} className="login-left-panel">
+          {/* Checkerboard texture */}
+          <div style={{
+            position: "absolute", inset: 0, opacity: 0.06,
+            backgroundImage: "repeating-conic-gradient(#fff 0% 25%, transparent 0% 50%)",
+            backgroundSize: "32px 32px",
+          }} />
 
-      {/* Card */}
-      <div className={`relative z-10 w-full max-w-sm ${entered ? "gate-open" : ""}`}>
-        {/* Title */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center gap-3 mb-4">
-            {["♜","♞","♛","♚","♞","♜"].map((p, i) => (
-              <span key={i} className="rune" style={{
-                color: "#10b981", fontSize: 20,
-                animationDelay: `${i * 0.4}s`,
-              }}>{p}</span>
+          {/* Logo */}
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontFamily: "serif", fontSize: 28, color: "#fff" }}>♔</span>
+              <span style={{ fontFamily: "var(--font-display)", fontSize: 22, color: "#fff", letterSpacing: "0.06em" }}>
+                CHESSCONNECT
+              </span>
+            </div>
+            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, marginTop: 6 }}>
+              Player Training Portal
+            </p>
+          </div>
+
+          {/* Hero text */}
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <p style={{
+              fontFamily: "var(--font-display)",
+              fontSize: 48, lineHeight: 1.05,
+              color: "#fff", letterSpacing: "0.03em",
+              marginBottom: 16,
+            }}>
+              TRAIN.<br />IMPROVE.<br />DOMINATE.
+            </p>
+            <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.6, maxWidth: 280 }}>
+              Your personal chess training portal. Access your sessions, missions, and progress — all in one place.
+            </p>
+          </div>
+
+          {/* Bottom piece row */}
+          <div style={{ position: "relative", zIndex: 1, display: "flex", gap: 12, opacity: 0.25 }}>
+            {["♜","♞","♝","♛","♚","♝","♞","♜"].map((p, i) => (
+              <span key={i} style={{ fontFamily: "serif", fontSize: 22, color: "#fff" }}>{p}</span>
             ))}
           </div>
-          <h1 style={{
-            fontFamily: "Georgia, serif",
-            fontSize: 28, fontWeight: 800,
-            background: "linear-gradient(135deg, #10b981, #f59e0b, #10b981)",
-            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-            letterSpacing: "0.02em",
+        </div>
+
+        {/* Right panel — form */}
+        <div style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "24px 20px",
+          minHeight: "100vh",
+        }}>
+          {/* Mobile logo */}
+          <div style={{ marginBottom: 36, textAlign: "center" }} className="login-mobile-logo">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 8 }}>
+              <span style={{ fontFamily: "serif", fontSize: 28, color: "#1B5E35" }}>♔</span>
+              <span style={{ fontFamily: "var(--font-display)", fontSize: 22, color: "#111827", letterSpacing: "0.06em" }}>
+                CHESSCONNECT
+              </span>
+            </div>
+            <p style={{ color: "#6B7280", fontSize: 13 }}>Player Training Portal</p>
+          </div>
+
+          {/* Form card */}
+          <div style={{
+            width: "100%",
+            maxWidth: 380,
+            background: "#fff",
+            border: "1px solid rgba(0,0,0,0.07)",
+            borderRadius: 20,
+            padding: "32px 28px",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)",
           }}>
-            ChessConnect
-          </h1>
-          <p style={{ color: "rgba(16,185,129,0.6)", fontSize: 13, marginTop: 6, letterSpacing: "0.15em", textTransform: "uppercase" }}>
-            Enter the Arena
+            <h1 style={{
+              fontFamily: "var(--font-display)",
+              fontSize: 28, letterSpacing: "0.04em",
+              color: "#111827", marginBottom: 4,
+            }}>
+              SIGN IN
+            </h1>
+            <p style={{ fontSize: 14, color: "#6B7280", marginBottom: 24 }}>
+              Welcome back. Enter your credentials to continue.
+            </p>
+
+            <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div>
+                <label className="cc-label">Email address</label>
+                <input
+                  className="cc-input"
+                  type="email" required autoComplete="email"
+                  value={email} onChange={e => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                />
+              </div>
+
+              <div>
+                <label className="cc-label">Password</label>
+                <input
+                  className="cc-input"
+                  type="password" required autoComplete="current-password"
+                  value={password} onChange={e => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                />
+              </div>
+
+              {error && (
+                <div style={{
+                  background: "rgba(220,38,38,0.06)",
+                  border: "1px solid rgba(220,38,38,0.18)",
+                  borderRadius: 10, padding: "10px 14px",
+                }}>
+                  <p style={{ color: "#DC2626", fontSize: 13 }}>{error}</p>
+                </div>
+              )}
+
+              <button
+                type="submit" disabled={loading}
+                className="cc-btn-primary"
+                style={{ marginTop: 4 }}
+              >
+                {loading ? (
+                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "#fff", borderRadius: "50%", animation: "cc-spin 0.8s linear infinite" }} />
+                    Signing in…
+                  </span>
+                ) : "Sign in"}
+              </button>
+            </form>
+          </div>
+
+          <p style={{ marginTop: 20, fontSize: 13, color: "#9CA3AF", textAlign: "center" }}>
+            Need access? Ask your coach for an invite.
           </p>
         </div>
-
-        {/* Form card */}
-        <div style={{
-          background: "rgba(13,27,20,0.85)",
-          border: "1px solid rgba(16,185,129,0.2)",
-          borderRadius: 20,
-          padding: "28px 24px",
-          backdropFilter: "blur(12px)",
-          boxShadow: "0 8px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(16,185,129,0.1)",
-        }}>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: "rgba(16,185,129,0.7)", letterSpacing:"0.08em", textTransform:"uppercase" }}>
-                Email
-              </label>
-              <input
-                type="email" required autoComplete="email"
-                value={email} onChange={e => setEmail(e.target.value)}
-                placeholder="warrior@chess.ke"
-                style={{
-                  width: "100%", marginTop: 6,
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(16,185,129,0.2)",
-                  borderRadius: 10, padding: "10px 14px",
-                  color: "#e2e8f0", fontSize: 14,
-                  outline: "none", boxSizing: "border-box",
-                }}
-                onFocus={e => (e.target.style.borderColor = "rgba(16,185,129,0.6)")}
-                onBlur={e => (e.target.style.borderColor = "rgba(16,185,129,0.2)")}
-              />
-            </div>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: "rgba(16,185,129,0.7)", letterSpacing:"0.08em", textTransform:"uppercase" }}>
-                Password
-              </label>
-              <input
-                type="password" required autoComplete="current-password"
-                value={password} onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                style={{
-                  width: "100%", marginTop: 6,
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(16,185,129,0.2)",
-                  borderRadius: 10, padding: "10px 14px",
-                  color: "#e2e8f0", fontSize: 14,
-                  outline: "none", boxSizing: "border-box",
-                }}
-                onFocus={e => (e.target.style.borderColor = "rgba(16,185,129,0.6)")}
-                onBlur={e => (e.target.style.borderColor = "rgba(16,185,129,0.2)")}
-              />
-            </div>
-
-            {error && (
-              <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 10, padding: "10px 14px" }}>
-                <p style={{ color: "#fca5a5", fontSize: 13 }}>{error}</p>
-              </div>
-            )}
-
-            <button
-              type="submit" disabled={loading || entered}
-              style={{
-                width: "100%", marginTop: 4,
-                padding: "12px",
-                background: loading || entered
-                  ? "rgba(16,185,129,0.3)"
-                  : "linear-gradient(135deg, #059669, #10b981)",
-                border: "none", borderRadius: 12,
-                color: "#fff", fontSize: 15, fontWeight: 700,
-                cursor: loading || entered ? "not-allowed" : "pointer",
-                letterSpacing: "0.04em",
-                boxShadow: "0 4px 20px rgba(16,185,129,0.3)",
-                transition: "all 0.2s",
-              }}
-            >
-              {entered ? "⚔️ Entering…" : loading ? "Verifying…" : "⚔️ Enter Arena"}
-            </button>
-          </form>
-        </div>
-
-        <p style={{ textAlign:"center", fontSize:12, color:"rgba(16,185,129,0.3)", marginTop:20 }}>
-          Need access? Ask your coach for an invite.
-        </p>
       </div>
+
+      {/* Responsive: show left panel on md+ */}
+      <style>{`
+        @media (min-width: 768px) {
+          .login-left-panel  { display: flex !important; }
+          .login-mobile-logo { display: none !important; }
+        }
+      `}</style>
     </div>
   )
 }

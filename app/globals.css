@@ -1,39 +1,48 @@
 @import "tailwindcss";
 
-/* ═══════════════════════════════════════════════════
-   CHESSCONNECT — KING'S GAMBIT DESIGN SYSTEM
-   Inspired by: Think app boldness · Chess.com depth
-   · Chess Master warmth
-   ═══════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════
+   CHESSCONNECT PLAYER — DESIGN SYSTEM
+   Light, clean, premium. Inspired by top-tier
+   mobile chess and learning app references.
+   ═══════════════════════════════════════════════ */
 
 :root {
-  /* Palette — near-black with warm chess gold */
-  --bg:         #09090B;   /* zinc-950           */
-  --surface:    #111115;   /* slightly lighter   */
-  --card:       #18181C;   /* card surface       */
-  --card-hi:    #1F1F25;   /* hovered card       */
-  --border:     rgba(255,255,255,0.07);
-  --border-med: rgba(255,255,255,0.13);
+  /* ── Backgrounds ──────────────────────────── */
+  --bg:       #F5F4EF;   /* warm off-white canvas  */
+  --surface:  #FFFFFF;   /* card surface           */
+  --surface-2:#F9F8F5;   /* subtle secondary       */
 
-  /* Text */
-  --text:   #FAFAFA;        /* near-white         */
-  --text-2: #A1A1AA;        /* zinc-400           */
-  --text-3: #52525B;        /* zinc-600           */
-  --text-4: #27272A;        /* zinc-800           */
+  /* ── Borders ──────────────────────────────── */
+  --border:     rgba(0,0,0,0.07);
+  --border-med: rgba(0,0,0,0.12);
 
-  /* Accents */
-  --gold:   #E8C547;        /* chess-board gold   */
-  --amber:  #F59E0B;        /* warm amber         */
-  --green:  #22C55E;        /* bright active      */
-  --blue:   #60A5FA;
-  --purple: #A78BFA;
-  --red:    #F87171;
-  --orange: #FB923C;
+  /* ── Text ─────────────────────────────────── */
+  --text:   #111827;
+  --text-2: #6B7280;
+  --text-3: #9CA3AF;
+  --text-4: #D1D5DB;
 
-  /* Fonts */
+  /* ── Brand green ──────────────────────────── */
+  --green:    #1B5E35;   /* primary forest green   */
+  --green-2:  #2E7D50;   /* hover / lighter        */
+  --green-bg: #EDF4F0;   /* green tinted bg        */
+  --green-mid:#C5DFD0;   /* medium tint            */
+
+  /* ── Accent ───────────────────────────────── */
+  --gold:    #B45309;    /* warm amber             */
+  --orange:  #C2571A;    /* terracotta CTA         */
+  --red:     #DC2626;
+  --blue:    #1D4ED8;
+  --purple:  #7C3AED;
+
+  /* ── Shadows ──────────────────────────────── */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.05);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.06);
+
+  /* ── Typography ───────────────────────────── */
   --font-display: 'Bebas Neue', 'Impact', sans-serif;
-  --font-ui:      'DM Sans', sans-serif;
-  --font-body:    'DM Sans', sans-serif;
+  --font-body:    'DM Sans', system-ui, sans-serif;
   --font-mono:    'DM Mono', monospace;
 }
 
@@ -48,124 +57,158 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 15px;
+  line-height: 1.5;
 }
 
-/* ── Scrollbar ──────────────────────────────────────── */
-::-webkit-scrollbar              { width: 3px; height: 3px; }
+/* ── Scrollbar ────────────────────────────────── */
+::-webkit-scrollbar              { width: 3px; }
 ::-webkit-scrollbar-track        { background: transparent; }
-::-webkit-scrollbar-thumb        { background: rgba(255,255,255,0.1); border-radius: 99px; }
+::-webkit-scrollbar-thumb        { background: rgba(0,0,0,0.12); border-radius: 99px; }
 
-/* ── Animations ─────────────────────────────────────── */
+/* ── Animations ───────────────────────────────── */
 @keyframes cc-spin {
   to { transform: rotate(360deg); }
 }
 @keyframes cc-fade-up {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes cc-fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0);     }
 }
 @keyframes cc-shimmer {
-  0%   { background-position: -300% center; }
-  100% { background-position:  300% center; }
+  0%   { background-position: -400% center; }
+  100% { background-position:  400% center; }
 }
-@keyframes cc-pulse {
-  0%, 100% { opacity: 0.6; }
-  50%       { opacity: 1; }
-}
-@keyframes cc-float {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-6px); }
-}
-@keyframes cc-pop {
-  0%   { transform: scale(0.85); opacity: 0; }
-  60%  { transform: scale(1.04); }
-  100% { transform: scale(1);    opacity: 1; }
-}
-@keyframes cc-glow-pulse {
-  0%, 100% { box-shadow: 0 0 12px var(--gold); }
-  50%       { box-shadow: 0 0 28px var(--gold); }
-}
-@keyframes cc-nav-active {
-  0%, 100% { opacity: 0.9; }
-  50%       { opacity: 1; }
-}
-@keyframes cc-live {
+@keyframes cc-pulse-dot {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.4; }
 }
 
-/* ── Utility classes ─────────────────────────────────── */
+/* ── Utility classes ──────────────────────────── */
+
+/* Page enter */
 .cc-page {
-  animation: cc-fade-up 0.32s cubic-bezier(0.22,1,0.36,1) both;
+  animation: cc-fade-up 0.28s cubic-bezier(0.22,1,0.36,1) both;
 }
 
-/* Bebas Neue display text */
-.cc-display {
-  font-family: var(--font-display);
-  letter-spacing: 0.04em;
-  line-height: 1;
+/* Standard card */
+.cc-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
 }
 
-/* Dark input */
+/* Green primary button */
+.cc-btn-primary {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; padding: 13px 20px;
+  background: var(--green);
+  color: #fff;
+  border: none; border-radius: 12px;
+  font-family: var(--font-body);
+  font-size: 15px; font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  letter-spacing: 0.01em;
+}
+.cc-btn-primary:hover  { background: var(--green-2); }
+.cc-btn-primary:active { transform: scale(0.98); }
+.cc-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Ghost button */
+.cc-btn-ghost {
+  display: flex; align-items: center; justify-content: center;
+  padding: 11px 20px;
+  background: transparent;
+  color: var(--text-2);
+  border: 1px solid var(--border-med); border-radius: 12px;
+  font-family: var(--font-body);
+  font-size: 14px; font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.cc-btn-ghost:hover { background: var(--surface-2); color: var(--text); }
+
+/* Form input */
 .cc-input {
   width: 100%;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid var(--border-med);
+  background: var(--surface);
+  border: 1.5px solid var(--border-med);
   color: var(--text);
-  border-radius: 14px;
-  padding: 11px 15px;
+  border-radius: 12px;
+  padding: 11px 14px;
   font-size: 14px;
   font-family: var(--font-body);
   outline: none;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 .cc-input:focus {
-  border-color: var(--gold);
-  background: rgba(232,197,71,0.04);
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(27,94,53,0.1);
 }
-.cc-input[readonly] { opacity: 0.35; cursor: not-allowed; }
-.cc-input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
+.cc-input::placeholder { color: var(--text-3); }
+.cc-input[readonly] { background: var(--surface-2); color: var(--text-3); cursor: not-allowed; }
+.cc-input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0.5; }
 
 /* Label */
 .cc-label {
   display: block;
-  font-family: var(--font-display);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  color: var(--text-3);
-  margin-bottom: 7px;
-  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  margin-bottom: 6px;
+  letter-spacing: 0.01em;
 }
 
-/* Gold pill badge */
-.cc-badge-gold {
-  font-family: var(--font-display);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  color: var(--gold);
-  background: rgba(232,197,71,0.1);
-  border: 1px solid rgba(232,197,71,0.25);
+/* Pill badge */
+.cc-badge {
+  display: inline-flex; align-items: center;
+  font-size: 11px; font-weight: 600;
+  padding: 2px 9px;
   border-radius: 99px;
-  padding: 3px 10px;
+}
+.cc-badge-green {
+  background: var(--green-bg);
+  color: var(--green);
+  border: 1px solid var(--green-mid);
+}
+.cc-badge-gold {
+  background: rgba(180,83,9,0.08);
+  color: var(--gold);
+  border: 1px solid rgba(180,83,9,0.18);
+}
+.cc-badge-red {
+  background: rgba(220,38,38,0.07);
+  color: var(--red);
+  border: 1px solid rgba(220,38,38,0.16);
 }
 
-/* Card press */
+/* Section header label */
+.cc-section-label {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--text-3);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+/* Live dot */
+.cc-live-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #22C55E;
+  animation: cc-pulse-dot 1.4s ease-in-out infinite;
+}
+
+/* Card interactive */
 .cc-card-press {
-  transition: transform 0.12s ease, opacity 0.12s;
+  transition: transform 0.12s ease, box-shadow 0.12s;
   cursor: pointer;
 }
-.cc-card-press:active { transform: scale(0.97); opacity: 0.85; }
+.cc-card-press:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-sm);
+}
 
 /* Nav tap */
-.cc-nav-tab { transition: opacity 0.12s; }
+.cc-nav-tab { transition: opacity 0.1s; }
 .cc-nav-tab:active { opacity: 0.6; }
-
-/* Checkerboard micro-pattern (decorative) */
-.cc-chess-bg {
-  background-image:
-    repeating-conic-gradient(rgba(232,197,71,0.04) 0% 25%, transparent 0% 50%);
-  background-size: 24px 24px;
-}

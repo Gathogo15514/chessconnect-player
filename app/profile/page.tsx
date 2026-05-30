@@ -27,16 +27,16 @@ const S = {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div style={{
-      background: "var(--card)", border: `1px solid ${S.border}`,
+      background: "var(--surface)", border: "1px solid var(--border)",
       borderRadius: 20, overflow: "hidden",
     }}>
       <div style={{
         padding: "12px 16px",
-        borderBottom: "1px solid rgba(255,255,255,0.04)",
+        borderBottom: "1px solid var(--border)",
       }}>
         <p style={{
           fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 12,
-          color: S.text2, letterSpacing: "0.08em", textTransform: "uppercase",
+          color: "var(--text-2)", letterSpacing: "0.08em", textTransform: "uppercase",
         }}>
           {title}
         </p>
@@ -179,15 +179,14 @@ export default function ProfilePage() {
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", paddingBottom: 80 }}>
       <style>{`
-        @keyframes cc-spin    { to { transform: rotate(360deg); } }
-        @keyframes cc-fade-up { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes cc-spin { to { transform: rotate(360deg); } }
         @keyframes cc-float   { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
       `}</style>
 
       {/* Header */}
-      <header style={{ padding:"16px 18px 12px", background:"rgba(9,9,11,0.95)", borderBottom:"1px solid rgba(232,197,71,0.1)", display:"flex", alignItems:"center", gap:10, position:"sticky", top:0, zIndex:40, backdropFilter:"blur(20px)" }}>
-        <span style={{ fontFamily:"serif", fontSize:20, color:"var(--gold)" }}>♔</span>
-        <span style={{ fontFamily:"var(--font-display)", fontSize:20, color:"var(--text)", letterSpacing:"0.08em" }}>MY PROFILE</span>
+      <header style={{ background:"#1B5E35", padding:"16px 18px 16px", display:"flex", alignItems:"center", gap:10 }}>
+        <span style={{ fontFamily:"serif", fontSize:22, color:"#fff" }}>♔</span>
+        <h1 style={{ fontFamily:"var(--font-display)", fontSize:22, color:"#fff", letterSpacing:"0.04em" }}>MY PROFILE</h1>
       </header>
 
       <main style={{ maxWidth: 480, margin: "0 auto", padding: "4px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
@@ -203,50 +202,33 @@ export default function ProfilePage() {
           <>
             {/* ── Player card ─────────────────────────────────── */}
             <div style={{
-              background: `linear-gradient(135deg, ${S.surface}, #12152A)`,
-              border: `1px solid ${av.color}30`,
-              borderRadius: 24, padding: 20,
-              display: "flex", alignItems: "center", gap: 16,
-              position: "relative", overflow: "hidden",
-              animation: "cc-fade-up 0.35s ease both",
+              background: "#1B5E35",
+              borderRadius: 16, padding: 18,
+              display: "flex", alignItems: "center", gap: 14,
             }}>
-              {/* Glow bg */}
-              <div style={{
-                position: "absolute", top: -40, right: -40,
-                width: 120, height: 120, borderRadius: "50%",
-                background: `radial-gradient(circle, ${av.glow ?? av.color + "22"} 0%, transparent 70%)`,
-                pointerEvents: "none",
-              }} />
-
               {/* Avatar */}
               <div style={{
-                width: 70, height: 70, borderRadius: "50%", flexShrink: 0,
-                background: `radial-gradient(circle at 35% 35%, ${av.color}30, ${av.color}08)`,
-                border: `2.5px solid ${av.color}`,
-                boxShadow: `0 0 20px ${av.glow ?? av.color + "30"}`,
+                width: 60, height: 60, borderRadius: "50%", flexShrink: 0,
+                background: "rgba(255,255,255,0.15)",
+                border: "2px solid rgba(255,255,255,0.3)",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 30,
-                animation: "cc-float 3s ease-in-out infinite",
+                fontSize: 26,
               }}>
                 {av.emoji}
               </div>
 
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{
-                  fontFamily: "var(--cc-font-display)", fontWeight: 800, fontSize: 20,
-                  color: S.text, lineHeight: 1.2,
-                }}>
-                  {fullName || "—"}
+                <p style={{ fontFamily: "var(--font-display)", fontSize: 22, color: "#fff", letterSpacing: "0.03em", lineHeight: 1.1 }}>
+                  {fullName?.toUpperCase() || "—"}
                 </p>
-                <p style={{ color: av.color, fontSize: 12, fontWeight: 600, marginTop: 2 }}>
+                <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 12, marginTop: 3 }}>
                   {av.name} · {av.class}
                 </p>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
                   {fideTitle && (
                     <span style={{
-                      fontFamily: "var(--cc-font-display)", fontSize: 10, fontWeight: 700,
-                      color: S.gold, background: "rgba(240,180,41,0.1)",
-                      border: "1px solid rgba(240,180,41,0.2)",
+                      fontSize: 10, fontWeight: 600,
+                      color: "#fff", background: "rgba(255,255,255,0.15)",
                       borderRadius: 20, padding: "2px 8px",
                     }}>
                       {fideTitle}
@@ -254,16 +236,15 @@ export default function ProfilePage() {
                   )}
                   {currentRating && (
                     <span style={{
-                      fontFamily: "var(--cc-font-display)", fontSize: 10, fontWeight: 700,
-                      color: S.green, background: "rgba(16,185,129,0.08)",
-                      border: "1px solid rgba(16,185,129,0.15)",
+                      fontSize: 10, fontWeight: 600,
+                      color: "#fff", background: "rgba(255,255,255,0.15)",
                       borderRadius: 20, padding: "2px 8px",
                     }}>
                       ♔ {currentRating}
                     </span>
                   )}
                   {(school || club) && (
-                    <span style={{ fontSize: 11, color: S.text3 }}>{school ?? club}</span>
+                    <span style={{ fontSize: 11, color: "var(--text)"3 }}>{school ?? club}</span>
                   )}
                 </div>
               </div>
@@ -309,13 +290,13 @@ export default function ProfilePage() {
 
               {/* ── Character picker ─────────────────────────── */}
               <div style={{
-                background: "var(--card)", border: `1px solid rgba(16,185,129,0.15)`,
+                background: "var(--surface)", border: `1px solid rgba(16,185,129,0.15)`,
                 borderRadius: 20, overflow: "hidden",
               }}>
-                <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)" }}>
                   <p style={{
                     fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 12,
-                    color: S.green, letterSpacing: "0.08em", textTransform: "uppercase",
+                    color: "var(--green)", letterSpacing: "0.08em", textTransform: "uppercase",
                   }}>
                     ⚔️ Your Character
                   </p>
@@ -374,9 +355,9 @@ export default function ProfilePage() {
               </div>
 
               {/* ── Board theme picker ───────────────────────── */}
-              <div style={{ background: "var(--card)", border: `1px solid ${S.border}`, borderRadius: 20, overflow: "hidden" }}>
-                <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                  <p style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 12, color: S.text2, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+              <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 20, overflow: "hidden" }}>
+                <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)" }}>
+                  <p style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 12, color: "var(--text-2)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
                     Board Theme
                   </p>
                 </div>
@@ -405,7 +386,7 @@ export default function ProfilePage() {
                           <p style={{ fontSize: 12, fontWeight: 600, color: selected ? S.text : S.text2, fontFamily: "var(--cc-font-display)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {t.displayName}
                           </p>
-                          <p style={{ fontSize: 10, color: S.text3 }}>{t.emoji}</p>
+                          <p style={{ fontSize: 10, color: "var(--text)"3 }}>{t.emoji}</p>
                         </div>
                       </button>
                     )
@@ -414,9 +395,9 @@ export default function ProfilePage() {
               </div>
 
               {/* ── Piece style picker ───────────────────────── */}
-              <div style={{ background: "var(--card)", border: `1px solid ${S.border}`, borderRadius: 20, overflow: "hidden" }}>
-                <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                  <p style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 12, color: S.text2, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+              <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 20, overflow: "hidden" }}>
+                <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)" }}>
+                  <p style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 12, color: "var(--text-2)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
                     Piece Style
                   </p>
                 </div>
@@ -441,7 +422,7 @@ export default function ProfilePage() {
                           <p style={{ fontSize: 12, fontWeight: 600, color: selected ? S.text : S.text2, fontFamily: "var(--cc-font-display)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {ps.displayName}
                           </p>
-                          <p style={{ fontSize: 10, color: S.text3 }}>{ps.emoji}</p>
+                          <p style={{ fontSize: 10, color: "var(--text)"3 }}>{ps.emoji}</p>
                         </div>
                       </button>
                     )
@@ -450,9 +431,9 @@ export default function ProfilePage() {
               </div>
 
               {/* ── Board orientation ────────────────────────── */}
-              <div style={{ background: "var(--card)", border: `1px solid ${S.border}`, borderRadius: 20, overflow: "hidden" }}>
-                <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                  <p style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 12, color: S.text2, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+              <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 20, overflow: "hidden" }}>
+                <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)" }}>
+                  <p style={{ fontFamily: "var(--cc-font-display)", fontWeight: 700, fontSize: 12, color: "var(--text-2)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
                     Board Orientation
                   </p>
                 </div>
@@ -476,7 +457,7 @@ export default function ProfilePage() {
                         <p style={{ fontSize: 12, fontWeight: 600, color: selected ? S.text : S.text2, fontFamily: "var(--cc-font-display)" }}>
                           {opt.label}
                         </p>
-                        <p style={{ fontSize: 10, color: S.text3, marginTop: 3 }}>{opt.sub}</p>
+                        <p style={{ fontSize: 10, color: "var(--text)"3, marginTop: 3 }}>{opt.sub}</p>
                       </button>
                     )
                   })}
@@ -502,10 +483,10 @@ export default function ProfilePage() {
                 type="submit" disabled={saving}
                 style={{
                   width: "100%", padding: "14px",
-                  background: saving ? "rgba(16,185,129,0.12)" : "linear-gradient(135deg, #0D8A5C, #10B981)",
-                  border: "none", borderRadius: 16,
-                  fontFamily: "var(--cc-font-display)", fontSize: 14, fontWeight: 800,
-                  color: saving ? S.green : "#fff",
+                  background: saving ? "var(--green-bg)" : "var(--green)",
+                  border: "none", borderRadius: 14,
+                  fontFamily: "var(--font-body)", fontSize: 15, fontWeight: 600,
+                  color: saving ? "var(--green)" : "#fff",
                   cursor: saving ? "not-allowed" : "pointer",
                   letterSpacing: "0.05em",
                   boxShadow: saving ? "none" : "0 4px 20px rgba(16,185,129,0.3)",
