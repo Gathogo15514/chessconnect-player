@@ -1,6 +1,6 @@
-const CACHE = "cc-player-v3"
+const CACHE = "cc-player-v4"
 
-const PRECACHE = ["/", "/assignments", "/login", "/offline"]
+const PRECACHE = ["/", "/login"]
 
 const NETWORK_ONLY = [
   "/api/v1/player/",
@@ -28,6 +28,8 @@ self.addEventListener("fetch", e => {
   if (request.method !== "GET") return
 
   const url = new URL(request.url)
+  // Skip non-http(s) schemes (chrome-extension, etc.)
+  if (!url.protocol.startsWith("http")) return
 
   // Always network-only for API and auth
   if (NETWORK_ONLY.some(p => url.pathname.startsWith(p))) return
