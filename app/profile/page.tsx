@@ -194,7 +194,7 @@ export default function ProfilePage() {
           <div style={{ display: "flex", justifyContent: "center", paddingTop: 80 }}>
             <div style={{
               width: 36, height: 36,
-              border: `3px solid ${S.green}`, borderTopColor: "transparent",
+              border: "3px solid #1B5E35", borderTopColor: "transparent",
               borderRadius: "50%", animation: "cc-spin 0.9s linear infinite",
             }} />
           </div>
@@ -244,7 +244,7 @@ export default function ProfilePage() {
                     </span>
                   )}
                   {(school || club) && (
-                    <span style={{ fontSize: 11, color: "var(--text)"3 }}>{school ?? club}</span>
+                    <span style={{ fontSize: 11, color: "var(--text-3)" }}>{school ?? club}</span>
                   )}
                 </div>
               </div>
@@ -371,7 +371,7 @@ export default function ProfilePage() {
                         style={{
                           borderRadius: 12, padding: "10px 12px",
                           background: selected ? "rgba(16,185,129,0.08)" : "rgba(255,255,255,0.03)",
-                          border: `2px solid ${selected ? S.green : "rgba(255,255,255,0.07)"}`,
+                          border: selected ? "2px solid #1B5E35" : "2px solid rgba(0,0,0,0.08)",
                           cursor: "pointer", textAlign: "left", transition: "all 0.15s",
                           display: "flex", alignItems: "center", gap: 10,
                         }}
@@ -383,10 +383,10 @@ export default function ProfilePage() {
                           ))}
                         </div>
                         <div style={{ minWidth: 0 }}>
-                          <p style={{ fontSize: 12, fontWeight: 600, color: selected ? S.text : S.text2, fontFamily: "var(--cc-font-display)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <p style={{ fontSize: 12, fontWeight: 600, color: selected ? "var(--text)" : "var(--text-2)", fontFamily: "var(--cc-font-display)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {t.displayName}
                           </p>
-                          <p style={{ fontSize: 10, color: "var(--text)"3 }}>{t.emoji}</p>
+                          <p style={{ fontSize: 10, color: "var(--text-3)" }}>{t.emoji}</p>
                         </div>
                       </button>
                     )
@@ -411,7 +411,7 @@ export default function ProfilePage() {
                         style={{
                           borderRadius: 12, padding: "10px 14px",
                           background: selected ? "rgba(16,185,129,0.08)" : "rgba(255,255,255,0.03)",
-                          border: `2px solid ${selected ? S.green : "rgba(255,255,255,0.07)"}`,
+                          border: selected ? "2px solid #1B5E35" : "2px solid rgba(0,0,0,0.08)",
                           cursor: "pointer", textAlign: "left", transition: "all 0.15s",
                           display: "flex", alignItems: "center", gap: 8,
                         }}
@@ -419,10 +419,10 @@ export default function ProfilePage() {
                         <span style={{ fontSize: 20, color: ps.whitePiece, textShadow: ps.whiteShadow }}>♔</span>
                         <span style={{ fontSize: 20, color: ps.blackPiece, textShadow: ps.blackShadow }}>♚</span>
                         <div style={{ minWidth: 0 }}>
-                          <p style={{ fontSize: 12, fontWeight: 600, color: selected ? S.text : S.text2, fontFamily: "var(--cc-font-display)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <p style={{ fontSize: 12, fontWeight: 600, color: selected ? "var(--text)" : "var(--text-2)", fontFamily: "var(--cc-font-display)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {ps.displayName}
                           </p>
-                          <p style={{ fontSize: 10, color: "var(--text)"3 }}>{ps.emoji}</p>
+                          <p style={{ fontSize: 10, color: "var(--text-3)" }}>{ps.emoji}</p>
                         </div>
                       </button>
                     )
@@ -450,14 +450,14 @@ export default function ProfilePage() {
                         style={{
                           borderRadius: 12, padding: "12px 14px",
                           background: selected ? "rgba(16,185,129,0.08)" : "rgba(255,255,255,0.03)",
-                          border: `2px solid ${selected ? S.green : "rgba(255,255,255,0.07)"}`,
+                          border: selected ? "2px solid #1B5E35" : "2px solid rgba(0,0,0,0.08)",
                           cursor: "pointer", textAlign: "left", transition: "all 0.15s",
                         }}
                       >
-                        <p style={{ fontSize: 12, fontWeight: 600, color: selected ? S.text : S.text2, fontFamily: "var(--cc-font-display)" }}>
+                        <p style={{ fontSize: 12, fontWeight: 600, color: selected ? "var(--text)" : "var(--text-2)", fontFamily: "var(--cc-font-display)" }}>
                           {opt.label}
                         </p>
-                        <p style={{ fontSize: 10, color: "var(--text)"3, marginTop: 3 }}>{opt.sub}</p>
+                        <p style={{ fontSize: 10, color: "var(--text-3)", marginTop: 3 }}>{opt.sub}</p>
                       </button>
                     )
                   })}
@@ -470,7 +470,7 @@ export default function ProfilePage() {
                   borderRadius: 14, padding: "12px 16px",
                   background: saveMsg.startsWith("Error") ? "rgba(248,113,113,0.08)" : "rgba(16,185,129,0.08)",
                   border: `1px solid ${saveMsg.startsWith("Error") ? "rgba(248,113,113,0.2)" : "rgba(16,185,129,0.2)"}`,
-                  color: saveMsg.startsWith("Error") ? "#F87171" : S.green,
+                  color: saveMsg.startsWith("Error") ? "#DC2626" : "#1B5E35",
                   fontSize: 13, fontWeight: 600, textAlign: "center",
                   fontFamily: "var(--cc-font-display)",
                 }}>
