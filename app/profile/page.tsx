@@ -174,6 +174,12 @@ export default function ProfilePage() {
     setSaving(false)
   }
 
+  async function handleSignOut() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.replace("/login")
+  }
+
   const av = getAvatar(avatarId)
 
   return (
@@ -495,6 +501,25 @@ export default function ProfilePage() {
                 {saving ? "Saving…" : "Save Changes"}
               </button>
             </form>
+
+            {/* ── Sign Out ─────────────────────────────────── */}
+            <button
+              type="button"
+              onClick={handleSignOut}
+              style={{
+                width: "100%", padding: "14px",
+                background: "rgba(220,38,38,0.08)",
+                border: "1px solid rgba(220,38,38,0.2)",
+                borderRadius: 14,
+                fontFamily: "var(--font-body)", fontSize: 15, fontWeight: 600,
+                color: "#EF4444",
+                cursor: "pointer", letterSpacing: "0.05em",
+                transition: "all 0.15s",
+                marginBottom: 8,
+              }}
+            >
+              Sign Out
+            </button>
           </>
         )}
       </main>
