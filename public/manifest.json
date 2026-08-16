@@ -2,7 +2,7 @@
   "name": "ChessLead Trainer",
   "short_name": "ChessLead",
   "description": "Kenya's school chess training portal — puzzles and assignments.",
-  "start_url": "/assignments",
+  "start_url": "/dashboard",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#F7F3EC",
@@ -14,9 +14,9 @@
   ],
   "shortcuts": [
     {
-      "name": "My Assignments",
-      "short_name": "Assignments",
-      "url": "/assignments",
+      "name": "Train",
+      "short_name": "Train",
+      "url": "/train",
       "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192" }]
     }
   ]
