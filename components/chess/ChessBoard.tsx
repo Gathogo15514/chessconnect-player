@@ -136,7 +136,12 @@ export default function ChessBoard({
   const fenTurn      = fen.split(" ")[1] as "w" | "b"
   const playerColor: "w" | "b" = fenTurn
 
+  // Resets the whole puzzle-solving state whenever a new position is handed
+  // in. Callers that swap puzzles also remount via `key`, but this component
+  // is reused in contexts without that guarantee, so the reset stays here
+  // rather than relying on every call site getting the key right.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setBoard(fenToBoard(fen))
     setMoveIdx(0)
     setSelected(null)

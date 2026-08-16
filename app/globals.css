@@ -1,95 +1,216 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
 /* ═══════════════════════════════════════════════
-   CHESSCONNECT PLAYER — DESIGN SYSTEM
-   Light, clean, premium. Inspired by top-tier
-   mobile chess and learning app references.
+   CHESSLEAD TRAINER — DESIGN SYSTEM
+   Inherits brand tokens from the main ChessLead
+   site (chessconnect). Do not invent new colors,
+   radii, or fonts here — extend the main site's
+   tokens for player-specific needs only.
    ═══════════════════════════════════════════════ */
 
 :root {
-  /* ── Backgrounds ──────────────────────────── */
-  --bg:       #F5F4EF;   /* warm off-white canvas  */
-  --surface:  #FFFFFF;   /* card surface           */
-  --surface-2:#F9F8F5;   /* subtle secondary       */
+  /* ── Brand identity tokens (mirrors chessconnect) ──── */
+  --brand-green:      #0D1F0F;
+  --brand-green-mid:  #1B4D2E;
+  --brand-gold:       #C9922E;
+  --brand-cream:      #F7F3EC;
+  --brand-border:     #E6E2D8;
+  --brand-text:       #1A1F1A;
+  --brand-muted:      #5F645E;
 
-  /* ── Borders ──────────────────────────────── */
-  --border:     rgba(0,0,0,0.07);
-  --border-med: rgba(0,0,0,0.12);
+  /* ── Semantic tokens ─────────────────────────────────── */
+  --background: #F7F3EC;
+  --foreground: #1A1F1A;
+  --card: #ffffff;
+  --card-foreground: #1A1F1A;
+  --popover: #ffffff;
+  --popover-foreground: #1A1F1A;
+  --primary: #1A6B42;
+  --primary-foreground: #ffffff;
+  --secondary: #EDE9E0;
+  --secondary-foreground: #1A1F1A;
+  --muted: #EDE9E0;
+  --muted-foreground: #5F645E;
+  --accent: #C9922E;
+  --accent-foreground: #0D1F0F;
+  --destructive: #B52626;
+  --destructive-foreground: #ffffff;
+  --border: #E6E2D8;
+  --input: #E6E2D8;
+  --ring: #C9922E;
+  --radius: 0.5rem;
 
-  /* ── Text ─────────────────────────────────── */
-  --text:   #111827;
-  --text-2: #6B7280;
-  --text-3: #9CA3AF;
-  --text-4: #D1D5DB;
+  /* Status tokens */
+  --success: #1A7A42;
+  --success-foreground: #ffffff;
+  --warning: #B5750E;
+  --warning-foreground: #ffffff;
+  --info: #1D6FBF;
+  --info-foreground: #ffffff;
 
-  /* ── Brand green ──────────────────────────── */
-  --green:    #1B5E35;   /* primary forest green   */
-  --green-2:  #2E7D50;   /* hover / lighter        */
-  --green-bg: #EDF4F0;   /* green tinted bg        */
-  --green-mid:#C5DFD0;   /* medium tint            */
+  /* Interaction tokens */
+  --hover: rgba(13,31,15,0.05);
+  --selection: rgba(201,146,46,0.2);
+  --disabled: #EDE9E0;
+  --disabled-foreground: #A8ACA4;
 
-  /* ── Accent ───────────────────────────────── */
-  --gold:    #B45309;    /* warm amber             */
-  --orange:  #C2571A;    /* terracotta CTA         */
-  --red:     #DC2626;
-  --blue:    #1D4ED8;
-  --purple:  #7C3AED;
+  /* Live/streak accent — player-specific, not on the main site */
+  --live: #22C55E;
+}
 
-  /* ── Shadows ──────────────────────────────── */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.05);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.05);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.06);
+@theme inline {
+  --color-brand-green:  var(--brand-green);
+  --color-brand-gold:   var(--brand-gold);
+  --color-brand-cream:  var(--brand-cream);
+  --color-brand-border: var(--brand-border);
+  --color-brand-text:   var(--brand-text);
+  --color-brand-muted:  var(--brand-muted);
 
-  /* ── Typography ───────────────────────────── */
-  --font-display: 'Bebas Neue', 'Impact', sans-serif;
-  --font-body:    'DM Sans', system-ui, sans-serif;
-  --font-mono:    'DM Mono', monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-hover: var(--hover);
+  --color-selection: var(--selection);
+  --color-disabled: var(--disabled);
+  --color-disabled-foreground: var(--disabled-foreground);
+  --color-live: var(--live);
+
+  --font-sans: var(--font-sans, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
+  --font-serif: var(--font-serif, "Georgia", "Times New Roman", serif);
+
+  /* Derived radius scale — same ratios as the main site */
+  --radius-sm: calc(var(--radius) - 4px);   /* 4px — chips, tags */
+  --radius-md: calc(var(--radius) - 2px);   /* 6px — buttons, inputs */
+  --radius-lg: var(--radius);               /* 8px — cards, panels */
+  --radius-xl: calc(var(--radius) + 4px);   /* 12px — modals, large panels */
+}
+
+.dark {
+  --background: #111410;
+  --foreground: #EEE9E0;
+  --card: #1A1F18;
+  --card-foreground: #EEE9E0;
+  --popover: #1A1F18;
+  --popover-foreground: #EEE9E0;
+  --primary: #2A9B5C;
+  --primary-foreground: #0D1F0F;
+  --secondary: #242820;
+  --secondary-foreground: #EEE9E0;
+  --muted: #242820;
+  --muted-foreground: #979F92;
+  --accent: #C9922E;
+  --accent-foreground: #0D1F0F;
+  --destructive: #E5484D;
+  --destructive-foreground: #ffffff;
+  --border: #2E342A;
+  --input: #2E342A;
+  --ring: #C9922E;
+
+  --brand-cream: #1A1F18;
+  --brand-border: #2E342A;
+  --brand-text: #EEE9E0;
+  --brand-muted: #979F92;
+
+  --success: #3BB273;
+  --success-foreground: #0D1F0F;
+  --warning: #D99A2B;
+  --warning-foreground: #111410;
+  --info: #5B9FE0;
+  --info-foreground: #0D1410;
+
+  --hover: rgba(247,243,236,0.06);
+  --selection: rgba(201,146,46,0.25);
+  --disabled: #242820;
+  --disabled-foreground: #5C6157;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
 
 html { scroll-behavior: smooth; }
 
+* {
+  border-color: var(--border);
+}
+
+::selection {
+  background: var(--selection);
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand-gold);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 html, body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font-body);
+  background: var(--background);
+  color: var(--foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-size: 15px;
-  line-height: 1.5;
 }
 
 /* ── Scrollbar ────────────────────────────────── */
 ::-webkit-scrollbar              { width: 3px; }
 ::-webkit-scrollbar-track        { background: transparent; }
-::-webkit-scrollbar-thumb        { background: rgba(0,0,0,0.12); border-radius: 99px; }
+::-webkit-scrollbar-thumb        { background: rgba(201,146,46,0.18); border-radius: 99px; }
 
 /* ── Animations ───────────────────────────────── */
-@keyframes cc-spin {
-  to { transform: rotate(360deg); }
-}
 @keyframes cc-fade-up {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0);     }
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-@keyframes cc-shimmer {
-  0%   { background-position: -400% center; }
-  100% { background-position:  400% center; }
+.cc-page-enter {
+  animation: cc-fade-up 0.16s ease-out both;
 }
+
 @keyframes cc-pulse-dot {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.4; }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(1.15); }
+}
+.pulse-dot { animation: cc-pulse-dot 2s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-dot { animation: none; }
 }
 
-/* ── Utility classes ──────────────────────────── */
-
-/* Page enter */
-.cc-page {
-  animation: cc-fade-up 0.28s cubic-bezier(0.22,1,0.36,1) both;
+/* ── Elevation ───────────────────────────────────────── */
+/* Prefer borders for separation. Shadows only on floating elements. */
+.card-shadow {
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.card-shadow-md {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.04);
+}
+.cc-elevated {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.09), 0 1px 4px rgba(0,0,0,0.05);
 }
 
-/* Standard card */
+/* ── Standard card ─────────────────────────────────────── */
 .cc-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -97,7 +218,7 @@ html, body {
   box-shadow: var(--shadow-sm);
 }
 
-/* Green primary button */
+/* ── Buttons ───────────────────────────────────────────── */
 .cc-btn-primary {
   display: flex; align-items: center; justify-content: center;
   width: 100%; padding: 13px 20px;
@@ -114,7 +235,6 @@ html, body {
 .cc-btn-primary:active { transform: scale(0.98); }
 .cc-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* Ghost button */
 .cc-btn-ghost {
   display: flex; align-items: center; justify-content: center;
   padding: 11px 20px;
@@ -128,7 +248,7 @@ html, body {
 }
 .cc-btn-ghost:hover { background: var(--surface-2); color: var(--text); }
 
-/* Form input */
+/* ── Form input ────────────────────────────────────────── */
 .cc-input {
   width: 100%;
   background: var(--surface);
@@ -143,13 +263,13 @@ html, body {
 }
 .cc-input:focus {
   border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(27,94,53,0.1);
+  box-shadow: 0 0 0 3px rgba(26,107,66,0.1);
 }
 .cc-input::placeholder { color: var(--text-3); }
 .cc-input[readonly] { background: var(--surface-2); color: var(--text-3); cursor: not-allowed; }
 .cc-input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0.5; }
 
-/* Label */
+/* ── Label ─────────────────────────────────────────────── */
 .cc-label {
   display: block;
   font-size: 12px;
@@ -159,7 +279,7 @@ html, body {
   letter-spacing: 0.01em;
 }
 
-/* Pill badge */
+/* ── Pill badge ────────────────────────────────────────── */
 .cc-badge {
   display: inline-flex; align-items: center;
   font-size: 11px; font-weight: 600;
@@ -172,43 +292,134 @@ html, body {
   border: 1px solid var(--green-mid);
 }
 .cc-badge-gold {
-  background: rgba(180,83,9,0.08);
+  background: rgba(201,146,46,0.08);
   color: var(--gold);
-  border: 1px solid rgba(180,83,9,0.18);
+  border: 1px solid rgba(201,146,46,0.18);
 }
 .cc-badge-red {
-  background: rgba(220,38,38,0.07);
+  background: rgba(181,38,38,0.07);
   color: var(--red);
-  border: 1px solid rgba(220,38,38,0.16);
+  border: 1px solid rgba(181,38,38,0.16);
 }
 
-/* Section header label */
-.cc-section-label {
-  font-family: var(--font-display);
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  color: var(--text-3);
-  text-transform: uppercase;
-  margin-bottom: 10px;
+/* ── Mobile nav clearance ────────────────────────────── */
+.safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 0px);
 }
 
-/* Live dot */
+/* ── Horizontal scroll row ───────────────────────────── */
+.scroll-row {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scroll-row::-webkit-scrollbar { display: none; }
+
+/* ── Pill tabs ───────────────────────────────────────── */
+.pill-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 14px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s;
+}
+.pill-tab-active  { background: var(--primary); color: #fff; }
+.pill-tab-inactive { background: transparent; color: var(--muted-foreground); }
+
+/* ── Live dot ─────────────────────────────────────────── */
 .cc-live-dot {
   width: 7px; height: 7px; border-radius: 50%;
-  background: #22C55E;
+  background: var(--live);
   animation: cc-pulse-dot 1.4s ease-in-out infinite;
 }
 
-/* Card interactive */
+/* ── Card interactive ─────────────────────────────────── */
 .cc-card-press {
   transition: transform 0.12s ease, box-shadow 0.12s;
   cursor: pointer;
 }
 .cc-card-press:active {
   transform: scale(0.98);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.04));
 }
 
-/* Nav tap */
+/* ── Nav tap ──────────────────────────────────────────── */
 .cc-nav-tab { transition: opacity 0.1s; }
 .cc-nav-tab:active { opacity: 0.6; }
+
+/* ── Metric value typography ─────────────────────────── */
+.metric-value {
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Section header label ─────────────────────────────── */
+.cc-section-label {
+  font-family: var(--font-serif);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.font-serif { font-family: var(--font-serif); }
+
+/* ═══════════════════════════════════════════════
+   LEGACY TOKEN ALIASES
+   The existing player routes (dashboard, quests,
+   guild, duel, etc.) were built against an earlier,
+   off-brand token set. Rather than rewrite ~5,000
+   lines of inline styles, alias those old var()
+   names to the brand tokens above so every existing
+   page re-themes automatically. New code should use
+   the tokens above directly, not these aliases.
+   ═══════════════════════════════════════════════ */
+:root {
+  --bg:         var(--background);
+  --surface:    var(--card);
+  --surface-2:  var(--secondary);
+  --text:       var(--foreground);
+  --text-2:     var(--muted-foreground);
+  --text-3:     #8A8F84;
+  --text-4:     #C9C4B8;
+  --border-med: #D8D2C4;
+
+  --green:      var(--primary);
+  --green-2:    #2A9B5C;
+  --green-bg:   #E8F1EC;
+  --green-mid:  #BFDACC;
+
+  --gold:       var(--brand-gold);
+  --orange:     var(--warning);
+  --red:        var(--destructive);
+  --blue:       var(--info);
+  --purple:     #5B57C7;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.06);
+
+  --font-display:    var(--font-serif);
+  --cc-font-display: var(--font-serif);
+  --font-body:       var(--font-sans);
+  --font-mono:       ui-monospace, "SF Mono", Consolas, monospace;
+}
+
+.dark {
+  --text-3: #6B7268;
+  --text-4: #3A4034;
+  --border-med: #3A4034;
+  --green-bg: rgba(42,155,92,0.12);
+  --green-mid: rgba(42,155,92,0.28);
+}

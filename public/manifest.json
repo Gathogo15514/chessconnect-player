@@ -1,12 +1,12 @@
 {
-  "name": "ChessConnect Player",
-  "short_name": "CC Player",
+  "name": "ChessLead Trainer",
+  "short_name": "ChessLead",
   "description": "Kenya's school chess training portal — puzzles and assignments.",
   "start_url": "/assignments",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#FAFAF9",
-  "theme_color": "#1B4D2E",
+  "background_color": "#F7F3EC",
+  "theme_color": "#0D1F0F",
   "categories": ["education", "games"],
   "icons": [
     { "src": "/icons/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any maskable" },

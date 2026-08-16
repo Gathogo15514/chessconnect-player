@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import dynamic from "next/dynamic"
+import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { bufferAttempt, submitBuffered, startRetryLoop } from "@/lib/chess/offline-buffer"
 
@@ -42,7 +43,14 @@ export default function AssignmentWorkspacePage({ params }: { params: Promise<{ 
   const [finished,      setFinished]     = useState(false)
   const [submitting,    setSubmitting]   = useState(false)
   const [error,         setError]        = useState<string | null>(null)
-  const startedAt = useRef(Date.now())
+  const startedAt = useRef<number>(0)
+
+  useEffect(() => {
+    // Ref mutations can't happen during render under this project's strict
+    // purity rules, so the mount timestamp is captured here instead. User
+    // interaction (which is all that reads it) can't happen before mount.
+    startedAt.current = Date.now()
+  }, [])
 
   useEffect(() => {
     params.then(p => setAssignmentId(p.id))
@@ -137,7 +145,7 @@ export default function AssignmentWorkspacePage({ params }: { params: Promise<{ 
       <div className="text-center">
         <span className="text-4xl">⚠️</span>
         <p className="mt-3 text-stone-700 font-medium">{error}</p>
-        <a href="/assignments" className="mt-4 inline-block text-sm text-green-800 underline">Back to assignments</a>
+        <Link href="/train" className="mt-4 inline-block text-sm text-green-800 underline">Back to assignments</Link>
       </div>
     </div>
   )
@@ -162,10 +170,10 @@ export default function AssignmentWorkspacePage({ params }: { params: Promise<{ 
         <div style={{ marginTop: 16, background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.15)", borderRadius: 12, padding: 12, textAlign: "left" }}>
           <p style={{ fontSize: 12, color: "#475569" }}>Results synced to your coach ✓</p>
         </div>
-        <a href="/assignments"
+        <Link href="/train"
            style={{ marginTop: 20, display: "block", width: "100%", background: "linear-gradient(135deg, #0D8A5C, #10B981)", color: "#fff", borderRadius: 14, padding: "12px", fontSize: 14, fontWeight: 800, fontFamily: "var(--cc-font-display)", textDecoration: "none", boxShadow: "0 4px 16px rgba(16,185,129,0.25)" }}>
           Back to Missions
-        </a>
+        </Link>
       </div>
     </div>
   )
@@ -176,7 +184,7 @@ export default function AssignmentWorkspacePage({ params }: { params: Promise<{ 
     <div style={{ minHeight: "100vh", background: "#070B17", display: "flex", flexDirection: "column" }}>
       {/* Header */}
       <header style={{ background: "linear-gradient(135deg, #0D1224, #121829)", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 40 }}>
-        <a href="/assignments" style={{ color: "#475569", fontSize: 13, textDecoration: "none" }}>← Missions</a>
+        <Link href="/train" style={{ color: "#475569", fontSize: 13, textDecoration: "none" }}>← Missions</Link>
         <span className="font-semibold text-sm truncate max-w-[200px]">{data.title}</span>
         <span className="text-green-200 text-sm">{idx + 1}/{data.total_exercises}</span>
       </header>

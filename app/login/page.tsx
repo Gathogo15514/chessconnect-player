@@ -21,11 +21,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#F5F4EF" }}>
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#F7F3EC" }}>
       <style>{`
         @keyframes cc-spin { to { transform: rotate(360deg); } }
         input::placeholder { color: #9CA3AF; }
-        input:focus { border-color: #1B5E35 !important; box-shadow: 0 0 0 3px rgba(27,94,53,0.1) !important; outline: none; }
+        input:focus { border-color: #1A6B42 !important; box-shadow: 0 0 0 3px rgba(27,94,53,0.1) !important; outline: none; }
       `}</style>
 
       {/* ── Mobile layout: stacked ──────────────── */}
@@ -36,7 +36,7 @@ export default function LoginPage() {
         <div style={{
           display: "none",
           flex: "0 0 44%",
-          background: "#1B5E35",
+          background: "#1A6B42",
           flexDirection: "column",
           justifyContent: "space-between",
           padding: "48px 44px",
@@ -53,9 +53,9 @@ export default function LoginPage() {
           {/* Logo */}
           <div style={{ position: "relative", zIndex: 1 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontFamily: "serif", fontSize: 28, color: "#fff" }}>♔</span>
-              <span style={{ fontFamily: "var(--font-display)", fontSize: 22, color: "#fff", letterSpacing: "0.06em" }}>
-                CHESSCONNECT
+              <img src="/icons/icon-192.svg" alt="" width={32} height={32} style={{ borderRadius: 8 }} />
+              <span style={{ fontFamily: "var(--font-display)", fontSize: 22, color: "#fff", letterSpacing: "0.04em" }}>
+                ChessLead <em style={{ fontStyle: "normal", color: "#C9922E" }}>Trainer</em>
               </span>
             </div>
             <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, marginTop: 6 }}>
@@ -99,9 +99,9 @@ export default function LoginPage() {
           {/* Mobile logo */}
           <div style={{ marginBottom: 36, textAlign: "center" }} className="login-mobile-logo">
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 8 }}>
-              <span style={{ fontFamily: "serif", fontSize: 28, color: "#1B5E35" }}>♔</span>
-              <span style={{ fontFamily: "var(--font-display)", fontSize: 22, color: "#111827", letterSpacing: "0.06em" }}>
-                CHESSCONNECT
+              <img src="/icons/icon-192.svg" alt="" width={30} height={30} style={{ borderRadius: 7 }} />
+              <span style={{ fontFamily: "var(--font-display)", fontSize: 22, color: "#111827", letterSpacing: "0.04em" }}>
+                ChessLead <em style={{ fontStyle: "normal", color: "#C9922E" }}>Trainer</em>
               </span>
             </div>
             <p style={{ color: "#6B7280", fontSize: 13 }}>Player Training Portal</p>

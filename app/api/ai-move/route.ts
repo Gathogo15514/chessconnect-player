@@ -5,7 +5,7 @@ const ANTHROPIC_API = "https://api.anthropic.com/v1/messages"
 const MODEL         = "claude-haiku-4-5-20251001"
 const MAX_RETRIES   = 3
 
-const SYSTEM_PROMPT = `You are a chess engine assistant for ChessConnect Kids. Given a FEN position, output ONLY a valid UCI move in the format "e2e4". No explanation, no punctuation, just the raw move string. Choose a good move for the current side to move.`
+const SYSTEM_PROMPT = `You are a chess engine assistant for ChessLead Trainer. Given a FEN position, output ONLY a valid UCI move in the format "e2e4". No explanation, no punctuation, just the raw move string. Choose a good move for the current side to move.`
 
 export async function POST(req: NextRequest) {
   const apiKey = process.env.ANTHROPIC_API_KEY

@@ -17,6 +17,10 @@ export default function AuthExchangePage() {
     history.replaceState(null, "", window.location.pathname + window.location.search)
 
     if (!access_token || !refresh_token) {
+      // Reading the URL hash is inherently client-only, so this validation
+      // can only run inside an effect — there's no async gap to wait out
+      // before reporting "the link was bad."
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setMsg("Invalid or missing session tokens. Please log in.")
       setStatus("error")
       return

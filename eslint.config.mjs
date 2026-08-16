@@ -12,6 +12,7 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "public/stockfish/**", // vendored, minified third-party engine build — not our code to lint
   ]),
 ]);
 
