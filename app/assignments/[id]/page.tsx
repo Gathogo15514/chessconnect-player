@@ -41,6 +41,7 @@ export default function AssignmentWorkspacePage({ params }: { params: Promise<{ 
   const [error,         setError]        = useState<string | null>(null)
   const startedAt = useRef<number>(0)
   const handledPuzzleRef = useRef<string | null>(null)
+  const accessTokenRef = useRef<string>("")
   const { settings } = useBoardSettings()
 
   useEffect(() => {
@@ -62,6 +63,7 @@ export default function AssignmentWorkspacePage({ params }: { params: Promise<{ 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { window.location.href = "/login"; return }
       setPlayerId(session.user.id)
+      accessTokenRef.current = session.access_token
 
       fetch(`${MAIN_API}/api/v1/player/assignments/active`, {
         headers: { Authorization: `Bearer ${session.access_token}` },
@@ -113,9 +115,9 @@ export default function AssignmentWorkspacePage({ params }: { params: Promise<{ 
       // All done — submit
       setSubmitting(true)
       const secs = Math.floor((Date.now() - startedAt.current) / 1000)
-      const result = await submitBuffered(assignmentId, playerId, secs)
+      const result = await submitBuffered(assignmentId, playerId, secs, accessTokenRef.current)
       if (!result.ok) {
-        startRetryLoop(assignmentId, playerId, secs, () => setFinished(true))
+        startRetryLoop(assignmentId, playerId, secs, accessTokenRef.current, () => setFinished(true))
       }
       setFinished(true)
       setSubmitting(false)

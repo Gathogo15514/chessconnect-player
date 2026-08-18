@@ -56,6 +56,7 @@ export async function submitBuffered(
   assignmentId: string,
   playerId:     string,
   durationSecs: number,
+  accessToken:  string,
 ): Promise<{ ok: boolean; processed: number }> {
   const records = await flushBuffer()
   if (!records.length) return { ok: true, processed: 0 }
@@ -66,8 +67,11 @@ export async function submitBuffered(
   try {
     const res = await fetch(`${MAIN_API}/api/v1/submissions`, {
       method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
+      // app.chesslead.org and chesslead.org are separate origins with no
+      // shared cookies, so identity has to travel as a Bearer token — the
+      // player_id field below is kept for shape compatibility only, the
+      // server resolves the real identity from this token.
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
       body: JSON.stringify({
         assignment_id: assignmentId,
         player_id:     playerId,
@@ -96,6 +100,7 @@ export function startRetryLoop(
   assignmentId: string,
   playerId:     string,
   durationSecs: number,
+  accessToken:  string,
   onSuccess?:   (processed: number) => void,
 ): void {
   if (_retryTimer !== null) return
@@ -103,7 +108,7 @@ export function startRetryLoop(
     const has = await flushBuffer()
     if (!has.length) { stopRetryLoop(); return }
     for (const r of has) await bufferAttempt(r)
-    const result = await submitBuffered(assignmentId, playerId, durationSecs)
+    const result = await submitBuffered(assignmentId, playerId, durationSecs, accessToken)
     if (result.ok) { stopRetryLoop(); onSuccess?.(result.processed) }
   }, 30_000)
 }
