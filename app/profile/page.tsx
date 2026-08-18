@@ -7,8 +7,7 @@ import { AppShell } from "@/components/nav/AppShell"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { BOARD_THEMES, PIECE_SETS } from "@/components/chess/themes"
-import type { ThemeId, PieceSetId } from "@/components/chess/themes"
+import { BoardSettingsPanel } from "@/components/chess/BoardSettingsPanel"
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -30,30 +29,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-function ChoiceGrid<T extends string | boolean>({
-  options, selected, onSelect,
-}: {
-  options: { id: T; render: React.ReactNode }[]
-  selected: T
-  onSelect: (id: T) => void
-}) {
-  return (
-    <div className="grid grid-cols-2 gap-2">
-      {options.map(o => (
-        <button
-          key={String(o.id)} type="button" onClick={() => onSelect(o.id)}
-          className={
-            "rounded-xl border-2 p-2.5 text-left transition-colors " +
-            (selected === o.id ? "border-primary bg-primary/5" : "border-border bg-transparent hover:bg-secondary")
-          }
-        >
-          {o.render}
-        </button>
-      ))}
-    </div>
-  )
-}
-
 export default function ProfilePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
@@ -71,9 +46,6 @@ export default function ProfilePage() {
   const [school, setSchool] = useState<string | null>(null)
   const [club, setClub] = useState<string | null>(null)
   const [currentRating, setCurrentRating] = useState<number | null>(null)
-  const [boardTheme, setBoardTheme] = useState<ThemeId>("classic")
-  const [pieceSet, setPieceSet] = useState<PieceSetId>("standard")
-  const [boardFlipped, setBoardFlipped] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -90,15 +62,6 @@ export default function ProfilePage() {
           .select("id, fide_id, current_rating, admission_number, date_of_birth, guardian_name, guardian_phone, schools(name), clubs(name)")
           .eq("profile_id", session.user.id).maybeSingle(),
       ])
-
-      if (playerRes.data?.id) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: gp } = await (supabase.from("player_game_profiles") as any)
-          .select("board_theme, piece_set, board_flipped").eq("player_id", playerRes.data.id).maybeSingle()
-        if (gp?.board_theme) setBoardTheme(gp.board_theme as ThemeId)
-        if (gp?.piece_set) setPieceSet(gp.piece_set as PieceSetId)
-        if (typeof gp?.board_flipped === "boolean") setBoardFlipped(gp.board_flipped)
-      }
 
       setFullName(profileRes.data?.full_name ?? "")
       const pl = playerRes.data
@@ -146,22 +109,6 @@ export default function ProfilePage() {
       if (!res.ok) {
         const json = await res.json().catch(() => ({}))
         errors.push(json.error ?? "Failed to update profile.")
-      }
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: gpExists } = await (supabase.from("player_game_profiles") as any)
-        .select("player_id").eq("player_id", playerId).maybeSingle()
-      const themePayload = { board_theme: boardTheme, piece_set: pieceSet, board_flipped: boardFlipped }
-      if (gpExists) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error: gpErr } = await (supabase.from("player_game_profiles") as any)
-          .update(themePayload).eq("player_id", playerId)
-        if (gpErr) errors.push(gpErr.message)
-      } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error: gpErr } = await (supabase.from("player_game_profiles") as any)
-          .insert({ player_id: playerId, ...themePayload })
-        if (gpErr) errors.push(gpErr.message)
       }
     }
 
@@ -235,54 +182,6 @@ export default function ProfilePage() {
               </Field>
             </Section>
 
-            <Section title="Board theme">
-              <ChoiceGrid
-                selected={boardTheme}
-                onSelect={setBoardTheme}
-                options={Object.values(BOARD_THEMES).map(t => ({
-                  id: t.id,
-                  render: (
-                    <div className="flex items-center gap-2.5">
-                      <div className="grid h-8 w-8 shrink-0 grid-cols-4 overflow-hidden rounded-md">
-                        {Array.from({ length: 16 }, (_, i) => (
-                          <div key={i} style={{ background: (Math.floor(i / 4) + i) % 2 === 0 ? t.lightSquare : t.darkSquare }} />
-                        ))}
-                      </div>
-                      <p className="truncate text-[12.5px] font-semibold text-foreground">{t.displayName}</p>
-                    </div>
-                  ),
-                }))}
-              />
-            </Section>
-
-            <Section title="Piece style">
-              <ChoiceGrid
-                selected={pieceSet}
-                onSelect={setPieceSet}
-                options={Object.values(PIECE_SETS).map(ps => ({
-                  id: ps.id,
-                  render: (
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl" style={{ color: ps.whitePiece, textShadow: ps.whiteShadow }}>♔</span>
-                      <span className="text-xl" style={{ color: ps.blackPiece, textShadow: ps.blackShadow }}>♚</span>
-                      <p className="truncate text-[12.5px] font-semibold text-foreground">{ps.displayName}</p>
-                    </div>
-                  ),
-                }))}
-              />
-            </Section>
-
-            <Section title="Board orientation">
-              <ChoiceGrid
-                selected={boardFlipped}
-                onSelect={setBoardFlipped}
-                options={[
-                  { id: false, render: <><p className="text-[12.5px] font-semibold text-foreground">Play as White</p><p className="mt-0.5 text-[11px] text-muted-foreground">Pawns move up</p></> },
-                  { id: true, render: <><p className="text-[12.5px] font-semibold text-foreground">Play as Black</p><p className="mt-0.5 text-[11px] text-muted-foreground">Pawns move down</p></> },
-                ]}
-              />
-            </Section>
-
             {saveMsg && (
               <div className={"rounded-xl border p-3 text-center text-[13px] font-semibold " + (saveMsg.startsWith("Error") ? "border-destructive/20 bg-destructive/5 text-destructive" : "border-primary/20 bg-primary/5 text-primary")}>
                 {saveMsg}
@@ -293,6 +192,12 @@ export default function ProfilePage() {
               {saving ? "Saving…" : "Save changes"}
             </Button>
           </form>
+
+          {/* Board settings apply live (no Save needed) — separate from the form above. */}
+          <div>
+            <p className="mb-2.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Board settings</p>
+            <BoardSettingsPanel />
+          </div>
 
           <Button type="button" variant="outline" onClick={handleSignOut} className="w-full border-destructive/20 text-destructive hover:bg-destructive/5">
             Sign out

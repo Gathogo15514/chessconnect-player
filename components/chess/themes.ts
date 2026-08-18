@@ -1,4 +1,4 @@
-export type ThemeId    = "classic" | "cyberpunk_neon" | "enchanted_wood" | "obsidian" | "volcano_forge"
+export type ThemeId    = "classic" | "cyberpunk_neon" | "enchanted_wood" | "obsidian" | "volcano_forge" | "high_contrast"
 export type PieceSetId = "standard" | "robo_mechs" | "elemental_beasts" | "chibi_anime"
 
 export type BoardTheme = {
@@ -62,6 +62,17 @@ export const BOARD_THEMES: Record<ThemeId, BoardTheme> = {
     selectedSquare: "rgba(255,140,0,0.55)", lastMoveSquare: "rgba(255,69,0,0.4)",
     hintColor: "#ff6a00",
   },
+  // Accessibility theme: maximal luminance contrast between squares, and a
+  // selection/hint color (yellow) chosen to stay distinguishable under the
+  // common red-green color-vision deficiencies rather than relying on hue alone.
+  high_contrast: {
+    id: "high_contrast", displayName: "High Contrast", emoji: "◼️",
+    lightSquare: "#ffffff", darkSquare: "#000000",
+    border: "#000000",
+    selectedSquare: "rgba(255,215,0,0.75)",
+    lastMoveSquare: "rgba(0,120,255,0.45)",
+    hintColor: "#ffd700",
+  },
 }
 
 export const PIECE_SETS: Record<PieceSetId, PieceSetDef> = {
@@ -98,3 +109,20 @@ export const PIECE_UNICODE: Record<string, string> = {
 }
 
 export const FILES = ["a","b","c","d","e","f","g","h"]
+
+export const THEME_IDS = Object.keys(BOARD_THEMES) as ThemeId[]
+export const PIECE_SET_IDS = Object.keys(PIECE_SETS) as PieceSetId[]
+
+const PIECE_TO_LICHESS: Record<string, string> = {
+  K: "wK", Q: "wQ", R: "wR", B: "wB", N: "wN", P: "wP",
+  k: "bK", q: "bQ", r: "bR", b: "bB", n: "bN", p: "bP",
+}
+
+/** (piece type, color) -> the single-char key used by PIECE_UNICODE / Lichess sprite lookups. */
+export function pieceKey(type: string, color: "w" | "b"): string {
+  return color === "w" ? type.toUpperCase() : type.toLowerCase()
+}
+
+export function lichessPieceFile(pieceSymbolKey: string): string | undefined {
+  return PIECE_TO_LICHESS[pieceSymbolKey]
+}

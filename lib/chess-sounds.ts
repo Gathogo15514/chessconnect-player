@@ -29,6 +29,11 @@ const THEME_SOUNDS: Record<ThemeId, { move: SoundDef; capture: SoundDef; solve: 
     capture: { freq: 150, type: "sawtooth", duration: 0.35, ramp: 60  },
     solve:   { freq: 350, freq2: 500, type: "sawtooth", duration: 0.5 },
   },
+  high_contrast: {
+    move:    { freq: 500, type: "square",   duration: 0.1,  ramp: 350 },
+    capture: { freq: 250, type: "square",   duration: 0.2,  ramp: 120 },
+    solve:   { freq: 600, freq2: 800, type: "square", duration: 0.4 },
+  },
 }
 
 let ctx: AudioContext | null = null

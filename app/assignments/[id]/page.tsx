@@ -1,15 +1,12 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
-import dynamic from "next/dynamic"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { bufferAttempt, submitBuffered, startRetryLoop } from "@/lib/chess/offline-buffer"
-
-const ChessBoard = dynamic(
-  () => import("@/components/ChessBoard").then(m => ({ default: m.ChessBoard })),
-  { ssr: false, loading: () => <div className="w-full max-w-sm mx-auto aspect-square bg-stone-200 animate-pulse rounded-xl" /> }
-)
+import { ChessBoard } from "@/components/chess/ChessBoard"
+import { useBoardSettings } from "@/components/chess/BoardSettingsProvider"
+import { useActivity, type Activity } from "@/lib/chess/activity"
 
 const MAIN_API = process.env.NEXT_PUBLIC_MAIN_API_URL ?? ""
 
@@ -39,11 +36,12 @@ export default function AssignmentWorkspacePage({ params }: { params: Promise<{ 
   const [idx,           setIdx]          = useState(0)
   const [results,       setResults]      = useState<Record<string, PuzzleResult>>({})
   const [attempts,      setAttempts]     = useState<Record<string, number>>({})
-  const [wrongCount,    setWrongCount]   = useState(0)
   const [finished,      setFinished]     = useState(false)
   const [submitting,    setSubmitting]   = useState(false)
   const [error,         setError]        = useState<string | null>(null)
   const startedAt = useRef<number>(0)
+  const handledPuzzleRef = useRef<string | null>(null)
+  const { settings } = useBoardSettings()
 
   useEffect(() => {
     // Ref mutations can't happen during render under this project's strict
@@ -82,13 +80,20 @@ export default function AssignmentWorkspacePage({ params }: { params: Promise<{ 
 
   const puzzle = data?.puzzles[idx]
 
-  const handleSolved = useCallback(async () => {
+  const activityValue: Activity = puzzle
+    ? { id: puzzle.puzzle_id, type: "puzzle", fen: puzzle.initial_fen, solutionMoves: puzzle.solution_moves }
+    : { id: "loading", type: "practice", fen: "8/8/8/8/8/8/8/8 w - - 0 1" }
+  const activity = useActivity(activityValue)
+
+  useEffect(() => {
     if (!puzzle || !playerId || !assignmentId) return
-    const att = (attempts[puzzle.puzzle_id] ?? 0) + wrongCount + 1
+    if (activity.feedback !== "complete") return
+    if (handledPuzzleRef.current === puzzle.puzzle_id) return
+    handledPuzzleRef.current = puzzle.puzzle_id
 
+    const att = (attempts[puzzle.puzzle_id] ?? 0) + activity.wrongAttempts + 1
     setResults(r => ({ ...r, [puzzle.puzzle_id]: "solved" }))
-
-    await bufferAttempt({
+    bufferAttempt({
       puzzle_id:    puzzle.puzzle_id,
       item_id:      puzzle.item_id,
       status:       "PASSED",
@@ -98,12 +103,8 @@ export default function AssignmentWorkspacePage({ params }: { params: Promise<{ 
       buffered_at:   Date.now(),
     })
     setAttempts(a => ({ ...a, [puzzle.puzzle_id]: att }))
-    setWrongCount(0)
-  }, [puzzle, playerId, assignmentId, attempts, wrongCount])
-
-  const handleWrongMove = useCallback(() => {
-    setWrongCount(c => c + 1)
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activity.feedback, puzzle, playerId, assignmentId])
 
   async function handleNext() {
     if (!data || !playerId || !assignmentId) return
@@ -120,7 +121,6 @@ export default function AssignmentWorkspacePage({ params }: { params: Promise<{ 
       setSubmitting(false)
     } else {
       setIdx(nextIdx)
-      setWrongCount(0)
       startedAt.current = Date.now()
     }
   }
@@ -131,7 +131,7 @@ export default function AssignmentWorkspacePage({ params }: { params: Promise<{ 
       puzzle_id:    puzzle.puzzle_id,
       item_id:      puzzle.item_id,
       status:       "SKIPPED",
-      attempts:     wrongCount,
+      attempts:     activity.wrongAttempts,
       seconds_taken: Math.floor((Date.now() - startedAt.current) / 1000),
       moves_played:  [],
       buffered_at:   Date.now(),
@@ -178,7 +178,7 @@ export default function AssignmentWorkspacePage({ params }: { params: Promise<{ 
     </div>
   )
 
-  const isSolved = puzzle ? results[puzzle.puzzle_id] === "solved" : false
+  const isSolved = activity.feedback === "complete"
 
   return (
     <div style={{ minHeight: "100vh", background: "#070B17", display: "flex", flexDirection: "column" }}>
@@ -207,16 +207,25 @@ export default function AssignmentWorkspacePage({ params }: { params: Promise<{ 
 
             <ChessBoard
               key={puzzle.puzzle_id}
-              fen={puzzle.initial_fen}
-              solutionMoves={puzzle.solution_moves}
-              playerColor={puzzle.target_color === "white" ? "w" : "b"}
-              onSolved={handleSolved}
-              onWrongMove={handleWrongMove}
+              fen={activity.fen}
+              onMove={(from, to, promotion) => activity.attemptMove(from, to, promotion)}
+              getLegalTargets={sq => activity.busy ? [] : activity.engine.legalTargets(sq)}
+              getNeedsPromotion={(from, to) => activity.needsPromotion(from, to)}
+              lastMove={activity.lastMove}
+              checkedSquare={activity.engine.checkedKingSquare}
+              movableColor={puzzle.target_color === "white" ? "w" : "b"}
+              interactive={!isSolved}
+              flipped={settings.boardFlipped}
+              settings={settings}
+              className="mx-auto w-full max-w-sm"
             />
 
-            {wrongCount > 0 && !isSolved && (
+            {activity.wrongAttempts > 0 && !isSolved && (
               <p className="text-sm text-red-600 text-center">
-                {wrongCount} wrong {wrongCount === 1 ? "move" : "moves"} — keep trying!
+                {activity.wrongAttempts} wrong {activity.wrongAttempts === 1 ? "move" : "moves"} — keep trying!
+                {activity.wrongAttempts >= 3 && (
+                  <button onClick={activity.reveal} className="ml-2 underline text-red-400">Reveal answer</button>
+                )}
               </p>
             )}
 

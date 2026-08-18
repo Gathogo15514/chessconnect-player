@@ -95,8 +95,8 @@ export default function TopicPuzzlesPage() {
             <div className="flex flex-col gap-2.5">
               {levels.map(tl => {
                 const count = counts[tl.level.slug] ?? 0
-                return (
-                  <Card key={tl.id} className="flex-row items-center justify-between p-4">
+                const cardBody = (
+                  <Card className={"flex-row items-center justify-between p-4 " + (count > 0 ? "transition-shadow hover:shadow-md" : "opacity-60")}>
                     <div className="flex items-center gap-2.5">
                       <span className={"rounded-full px-2.5 py-1 text-[12px] font-semibold " + (LEVEL_STYLE[tl.level.slug] ?? "bg-secondary text-muted-foreground")}>
                         {tl.level.name}
@@ -106,6 +106,13 @@ export default function TopicPuzzlesPage() {
                       {count > 0 ? `${count} puzzle${count === 1 ? "" : "s"} ready` : "Coming soon"}
                     </span>
                   </Card>
+                )
+                return count > 0 ? (
+                  <Link key={tl.id} href={`/puzzles/${params.slug}/${tl.level.slug}`} className="no-underline">
+                    {cardBody}
+                  </Link>
+                ) : (
+                  <div key={tl.id} className="cursor-not-allowed">{cardBody}</div>
                 )
               })}
             </div>

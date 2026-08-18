@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next"
 import "./globals.css"
 import { DM_Sans, Playfair_Display } from "next/font/google"
 import { Toaster } from "@/components/ui/sonner"
+import { BoardSettingsProvider } from "@/components/chess/BoardSettingsProvider"
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -38,7 +39,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
       </head>
       <body className="font-sans" style={{ background: "var(--background)", minHeight: "100vh" }}>
-        {children}
+        <BoardSettingsProvider>
+          {children}
+        </BoardSettingsProvider>
         <Toaster richColors position="top-right" />
         <script dangerouslySetInnerHTML={{ __html: `
           if ('serviceWorker' in navigator) {

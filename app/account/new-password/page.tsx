@@ -29,7 +29,6 @@ export default function NewPasswordPage() {
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data }) => {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAuthorized(!!data.user)
       setChecking(false)
     })

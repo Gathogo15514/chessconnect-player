@@ -1,529 +1,351 @@
 "use client"
 
-import { useEffect, useRef, useState, useCallback } from "react"
-import { BOARD_THEMES, PIECE_SETS, PIECE_UNICODE, FILES, ThemeId, PieceSetId } from "./themes"
+import { useCallback, useMemo, useRef, useState } from "react"
+import {
+  BOARD_THEMES, PIECE_SETS, PIECE_UNICODE, FILES,
+  lichessPieceFile, pieceKey,
+  type ThemeId, type PieceSetId,
+} from "./themes"
+import { PromotionPicker } from "./PromotionPicker"
 import { playMoveSound, playCaptureSound, playSolveSound } from "@/lib/chess-sounds"
+import type { PromotionPiece } from "@/lib/chess/engine"
 
-const SQUARE_SIZE = 44
-const BOARD_PX = SQUARE_SIZE * 8
-
-const PIECE_TO_LICHESS: Record<string, string> = {
-  K: "wK", Q: "wQ", R: "wR", B: "wB", N: "wN", P: "wP",
-  k: "bK", q: "bQ", r: "bR", b: "bB", n: "bN", p: "bP",
+export type BoardSettings = {
+  boardTheme: ThemeId
+  pieceSet: PieceSetId
+  /** Default orientation for boards that don't have a forced side (puzzles
+   * force orientation to the player's assigned color regardless of this). */
+  boardFlipped: boolean
+  showCoordinates: boolean
+  showLegalMoves: boolean
+  animateMoves: boolean
+  soundEnabled: boolean
+  highlightLastMove: boolean
 }
 
-type Props = {
-  fen: string
-  solutionMoves: string[]
-  themeId: ThemeId
-  pieceSetId: PieceSetId
-  onSolve?: () => void
-  onMove?: (move: string) => void
-  onCaptureSuccess?: () => void
-  onNodeCleared?: () => void
-  flipped?: boolean
-  freePlay?: boolean
-  onFreeMove?: (move: { from: string; to: string; promotion?: string }) => void
+export const DEFAULT_BOARD_SETTINGS: BoardSettings = {
+  boardTheme: "classic",
+  pieceSet: "standard",
+  boardFlipped: false,
+  showCoordinates: true,
+  showLegalMoves: true,
+  animateMoves: true,
+  soundEnabled: true,
+  highlightLastMove: true,
 }
 
-type Particle = {
-  x: number; y: number
-  vx: number; vy: number
-  alpha: number; color: string; radius: number
-}
+type Piece = { type: "p" | "n" | "b" | "r" | "q" | "k"; color: "w" | "b" }
 
-type MoveEntry = { symbol: string; from: string; to: string; isPlayer: boolean }
-
-// ── FEN parsing ──────────────────────────────────────────────────────────────
-
-function fenToBoard(fen: string): (string | null)[][] {
-  const board: (string | null)[][] = Array.from({ length: 8 }, () => Array(8).fill(null))
+function parseFen(fen: string): Record<string, Piece> {
+  const map: Record<string, Piece> = {}
   const rows = fen.split(" ")[0].split("/")
-  rows.forEach((row, r) => {
-    let c = 0
+  rows.forEach((row, ri) => {
+    let fi = 0
     for (const ch of row) {
-      if (/\d/.test(ch)) { c += parseInt(ch) } else { board[r][c++] = ch }
+      if (/\d/.test(ch)) { fi += parseInt(ch, 10); continue }
+      map[FILES[fi] + (8 - ri)] = { type: ch.toLowerCase() as Piece["type"], color: ch === ch.toUpperCase() ? "w" : "b" }
+      fi++
     }
   })
-  return board
+  return map
 }
 
-function applyMove(board: (string | null)[][], move: string): (string | null)[][] {
-  const next = board.map(r => [...r])
-  const fc = FILES.indexOf(move[0])
-  const fr = 8 - parseInt(move[1])
-  const tc = FILES.indexOf(move[2])
-  const tr = 8 - parseInt(move[3])
-  const piece = next[fr][fc]
-  if (!piece) return next
-
-  const promoChar = move[4]
-  next[tr][tc] = promoChar
-    ? (piece === piece.toUpperCase() ? promoChar.toUpperCase() : promoChar.toLowerCase())
-    : piece
-  next[fr][fc] = null
-
-  // En passant: pawn moves diagonally to an empty square
-  if ((piece === "P" || piece === "p") && fc !== tc && board[tr][tc] === null) {
-    next[fr][tc] = null  // captured pawn on same rank as mover, destination file
-  }
-
-  // Castling
-  if (piece === "K" && fc === 4) {
-    if (tc === 6) { next[7][5] = "R"; next[7][7] = null }
-    if (tc === 2) { next[7][3] = "R"; next[7][0] = null }
-  }
-  if (piece === "k" && fc === 4) {
-    if (tc === 6) { next[0][5] = "r"; next[0][7] = null }
-    if (tc === 2) { next[0][3] = "r"; next[0][0] = null }
-  }
-
-  // Auto-queen fallback if no explicit promo char
-  if (!promoChar) {
-    if (piece === "P" && tr === 0) next[tr][tc] = "Q"
-    if (piece === "p" && tr === 7) next[tr][tc] = "q"
-  }
-
-  return next
+function squareCoords(square: string, flipped: boolean): { col: number; row: number } {
+  const file = FILES.indexOf(square[0])
+  const rank = parseInt(square[1], 10)
+  return { col: flipped ? 7 - file : file, row: flipped ? rank - 1 : 8 - rank }
 }
 
-// ── Particle helpers ─────────────────────────────────────────────────────────
-
-function spawnBurst(cx: number, cy: number, color: string): Particle[] {
-  return Array.from({ length: 16 }, (_, i) => {
-    const angle = (i / 16) * Math.PI * 2
-    const speed = 2.5 + Math.random() * 2
-    return { x: cx, y: cy, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, alpha: 1, color, radius: 3 + Math.random() * 3 }
-  })
+function squareAt(col: number, row: number, flipped: boolean): string {
+  const file = flipped ? 7 - col : col
+  const rank = flipped ? row + 1 : 8 - row
+  return FILES[file] + rank
 }
 
-// ── Component ────────────────────────────────────────────────────────────────
+export type ChessBoardProps = {
+  fen: string
+  /** Called with a fully-formed move attempt. The caller (activity engine or a
+   * bare ChessEngine) owns legality/rules — this component never decides on
+   * its own whether a move is "correct," only whether it's worth attempting. */
+  onMove: (from: string, to: string, promotion?: PromotionPiece) => void
+  getLegalTargets?: (square: string) => string[]
+  getNeedsPromotion?: (from: string, to: string) => boolean
+  lastMove?: { from: string; to: string } | null
+  checkedSquare?: string | null
+  /** Which side's pieces the player may pick up. "both" follows the FEN's
+   * side-to-move (free play); a fixed color locks the board to that side
+   * regardless of whose turn it nominally is (puzzles, where the player
+   * always plays one color across the whole line). */
+  movableColor?: "w" | "b" | "both"
+  interactive?: boolean
+  flipped?: boolean
+  settings?: Partial<BoardSettings>
+  className?: string
+}
 
-export default function ChessBoard({
-  fen,
-  solutionMoves,
-  themeId,
-  pieceSetId,
-  onSolve,
-  onMove,
-  onCaptureSuccess,
-  onNodeCleared,
-  flipped = false,
-  freePlay = false,
-  onFreeMove,
-}: Props) {
-  const theme    = BOARD_THEMES[themeId]
-  const pieceSet = PIECE_SETS[pieceSetId]
+export function ChessBoard({
+  fen, onMove, getLegalTargets, getNeedsPromotion,
+  lastMove = null, checkedSquare = null,
+  movableColor = "both", interactive = true, flipped = false,
+  settings: settingsProp, className,
+}: ChessBoardProps) {
+  const settings: BoardSettings = { ...DEFAULT_BOARD_SETTINGS, ...settingsProp }
+  const theme = BOARD_THEMES[settings.boardTheme] ?? BOARD_THEMES.classic
+  const pieceSet = PIECE_SETS[settings.pieceSet] ?? PIECE_SETS.standard
 
-  const [board,         setBoard]         = useState<(string | null)[][]>(() => fenToBoard(fen))
-  const [moveIdx,       setMoveIdx]       = useState(0)
-  const [selected,      setSelected]      = useState<[number, number] | null>(null)
-  const [lastMove,      setLastMove]      = useState<string | null>(null)
-  const [hint,          setHint]          = useState(false)
-  const [msg,           setMsg]           = useState<string | null>(null)
-  const [solved,        setSolved]        = useState(false)
-  const [playerTurn,    setPlayerTurn]    = useState(true)
-  const [wrongAttempts, setWrongAttempts] = useState(0)
-  const [revealed,      setRevealed]      = useState(false)
-  const [revealSquares, setRevealSquares] = useState<{ from: [number,number]; to: [number,number] } | null>(null)
-  const [moveLog,       setMoveLog]       = useState<MoveEntry[]>([])
+  const boardMap = useMemo(() => parseFen(fen), [fen])
+  const sideToMove = (fen.split(" ")[1] === "b" ? "b" : "w") as "w" | "b"
 
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const particles = useRef<Particle[]>([])
-  const rafRef    = useRef<number>(0)
+  const [selected, setSelected] = useState<string | null>(null)
+  const [pendingPromotion, setPendingPromotion] = useState<{ from: string; to: string; color: "w" | "b" } | null>(null)
+  const [dragSquare, setDragSquare] = useState<string | null>(null)
+  const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null)
+  const [hoverSquare, setHoverSquare] = useState<string | null>(null)
 
-  // Whose turn it is from FEN — determines which side the player controls
-  const fenTurn      = fen.split(" ")[1] as "w" | "b"
-  const playerColor: "w" | "b" = fenTurn
+  const boardRef = useRef<HTMLDivElement>(null)
+  const pointerDownRef = useRef<{ square: string; x: number; y: number; dragging: boolean } | null>(null)
 
-  // Resets the whole puzzle-solving state whenever a new position is handed
-  // in. Callers that swap puzzles also remount via `key`, but this component
-  // is reused in contexts without that guarantee, so the reset stays here
-  // rather than relying on every call site getting the key right.
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setBoard(fenToBoard(fen))
-    setMoveIdx(0)
+  const canMove = useCallback((color: "w" | "b") => {
+    if (!interactive) return false
+    return movableColor === "both" ? color === sideToMove : color === movableColor
+  }, [interactive, movableColor, sideToMove])
+
+  const legalTargets = useCallback((square: string): string[] => {
+    return getLegalTargets ? getLegalTargets(square) : []
+  }, [getLegalTargets])
+
+  const selectedTargets = selected ? legalTargets(selected) : []
+
+  function squareFromPoint(clientX: number, clientY: number): string | null {
+    const rect = boardRef.current?.getBoundingClientRect()
+    if (!rect || clientX < rect.left || clientX > rect.right || clientY < rect.top || clientY > rect.bottom) return null
+    const col = Math.min(7, Math.max(0, Math.floor(((clientX - rect.left) / rect.width) * 8)))
+    const row = Math.min(7, Math.max(0, Math.floor(((clientY - rect.top) / rect.height) * 8)))
+    return squareAt(col, row, flipped)
+  }
+
+  function playFeedbackSound(isCapture: boolean) {
+    if (!settings.soundEnabled) return
+    if (isCapture) playCaptureSound(settings.boardTheme)
+    else playMoveSound(settings.boardTheme)
+  }
+
+  function commitMove(from: string, to: string) {
+    if (getNeedsPromotion?.(from, to)) {
+      const piece = boardMap[from]
+      setPendingPromotion({ from, to, color: piece?.color ?? sideToMove })
+      return
+    }
+    playFeedbackSound(!!boardMap[to])
+    onMove(from, to)
     setSelected(null)
-    setLastMove(null)
-    setHint(false)
-    setMsg(null)
-    setSolved(false)
-    setPlayerTurn(true)
-    setWrongAttempts(0)
-    setRevealed(false)
-    setRevealSquares(null)
-    setMoveLog([])
-  }, [fen, solutionMoves.join(",")])
+  }
 
-  // Canvas particle loop
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext("2d")!
-    function tick() {
-      ctx.clearRect(0, 0, canvas!.width, canvas!.height)
-      particles.current = particles.current.filter(p => p.alpha > 0.02)
-      for (const p of particles.current) {
-        ctx.globalAlpha = p.alpha
-        ctx.fillStyle = p.color
-        ctx.beginPath()
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2)
-        ctx.fill()
-        p.x += p.vx; p.y += p.vy; p.vx *= 0.92; p.vy *= 0.92; p.alpha -= 0.033
-      }
-      ctx.globalAlpha = 1
-      rafRef.current = requestAnimationFrame(tick)
+  function resolvePromotion(type: PromotionPiece) {
+    if (!pendingPromotion) return
+    playFeedbackSound(!!boardMap[pendingPromotion.to])
+    onMove(pendingPromotion.from, pendingPromotion.to, type)
+    setPendingPromotion(null)
+    setSelected(null)
+  }
+
+  function handlePointerDown(square: string, e: React.PointerEvent) {
+    if (!interactive || pendingPromotion) return
+    const piece = boardMap[square]
+
+    if (selected && selected !== square && selectedTargets.includes(square) && !(piece && canMove(piece.color))) {
+      commitMove(selected, square)
+      return
     }
-    rafRef.current = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(rafRef.current)
-  }, [])
 
-  const burst = useCallback((col: number, row: number, color: string) => {
-    const cx = (flipped ? 7 - col : col) * SQUARE_SIZE + SQUARE_SIZE / 2
-    const cy = (flipped ? 7 - row : row) * SQUARE_SIZE + SQUARE_SIZE / 2
-    particles.current.push(...spawnBurst(cx, cy, color))
-  }, [flipped])
+    if (piece && canMove(piece.color)) {
+      setSelected(square)
+      pointerDownRef.current = { square, x: e.clientX, y: e.clientY, dragging: false }
+      ;(e.target as Element).setPointerCapture?.(e.pointerId)
+      return
+    }
 
-  function squareCoords(col: number, row: number): [number, number] {
-    return flipped ? [7 - col, 7 - row] : [col, row]
+    if (selected) setSelected(null)
   }
 
-  // Apply a move and log it
-  function applyAndLog(
-    currentBoard: (string | null)[][],
-    move: string,
-    isPlayer: boolean
-  ): (string | null)[][] {
-    const fc = FILES.indexOf(move[0])
-    const fr = 8 - parseInt(move[1])
-    const piece = currentBoard[fr]?.[fc]
-    const symbol = piece ? (PIECE_UNICODE[piece] ?? piece) : "?"
-    setMoveLog(prev => [...prev, { symbol, from: move.slice(0, 2), to: move.slice(2, 4), isPlayer }])
-    return applyMove(currentBoard, move)
-  }
-
-  // Reveal the current solution move visually, then auto-play it
-  function handleReveal() {
-    if (moveIdx >= solutionMoves.length) return
-    setRevealed(true)
-    const move = solutionMoves[moveIdx]
-    const fc = FILES.indexOf(move[0])
-    const fr = 8 - parseInt(move[1])
-    const tc = FILES.indexOf(move[2])
-    const tr = 8 - parseInt(move[3])
-    setRevealSquares({ from: [fc, fr], to: [tc, tr] })
-    setMsg("💡 Answer revealed — watch the move!")
-
-    // Auto-play the player's move after 2s
-    setTimeout(() => {
-      const nextBoard = applyAndLog(board, move, true)
-      const isCapture = board[tr][tc] !== null
-      setBoard(nextBoard)
-      setLastMove(move)
-      setSelected(null)
-      setRevealSquares(null)
-      if (isCapture) { burst(tc, tr, pieceSet.burstColor); playCaptureSound(themeId) }
-      else { burst(tc, tr, theme.hintColor); playMoveSound(themeId) }
-
-      const nextIdx = moveIdx + 1
-      if (nextIdx >= solutionMoves.length) {
-        setSolved(true); setMsg("✅ Solution shown — study this pattern!")
-        playSolveSound(themeId); onSolve?.(); onNodeCleared?.()
-        return
-      }
-
-      // Auto-play opponent move
-      setPlayerTurn(false)
-      setMoveIdx(nextIdx)
-      setTimeout(() => {
-        const oppMove = solutionMoves[nextIdx]
-        const oppTc = FILES.indexOf(oppMove[2])
-        const oppTr = 8 - parseInt(oppMove[3])
-        const oppCapture = nextBoard[oppTr][oppTc] !== null
-        const oppBoard = applyAndLog(nextBoard, oppMove, false)
-        setBoard(oppBoard)
-        setLastMove(oppMove)
-        setMoveIdx(nextIdx + 1)
-        if (oppCapture) { burst(oppTc, oppTr, "#ff4444"); playCaptureSound(themeId) }
-        else playMoveSound(themeId)
-        if (nextIdx + 1 >= solutionMoves.length) {
-          setSolved(true); setMsg("✅ Solution shown — study this pattern!")
-          playSolveSound(themeId); onSolve?.(); onNodeCleared?.()
-        } else {
-          setPlayerTurn(true)
-          setRevealed(false)  // let player try the next move
-          setMsg("▶ Try the next move!")
-        }
-      }, 800)
-    }, 2000)
-  }
-
-  function handleSquareClick(dispCol: number, dispRow: number) {
-    if (solved || revealed) return
-    if (!freePlay && !playerTurn) return
-
-    const [col, row] = squareCoords(dispCol, dispRow)
-
-    if (selected === null) {
-      const piece = board[row][col]
-      if (!piece) return
-      const isWhite = piece === piece.toUpperCase()
-      if ((playerColor === "w" && !isWhite) || (playerColor === "b" && isWhite)) return
-      setSelected([col, row])
-      setHint(false)
-      setMsg(null)
-    } else {
-      const [sc, sr] = selected
-      if (sc === col && sr === row) { setSelected(null); return }
-
-      const attempted = `${FILES[sc]}${8 - sr}${FILES[col]}${8 - row}`
-
-      // ── Free play ────────────────────────────────────────────────────────────
-      if (freePlay) {
-        const isCapture = board[row][col] !== null
-        const nextBoard = applyMove(board, attempted)
-        setBoard(nextBoard)
-        setLastMove(attempted)
-        setSelected(null)
-        if (isCapture) { burst(col, row, pieceSet.burstColor); playCaptureSound(themeId) }
-        else { burst(col, row, theme.hintColor); playMoveSound(themeId) }
-        onFreeMove?.({ from: attempted.slice(0, 2), to: attempted.slice(2, 4) })
-        return
-      }
-
-      // ── Puzzle mode ──────────────────────────────────────────────────────────
-      const expected = solutionMoves[moveIdx]
-
-      if (!expected || !expected.startsWith(attempted)) {
-        const newCount = wrongAttempts + 1
-        setWrongAttempts(newCount)
-        setSelected(null)
-        if (newCount >= 3) {
-          setMsg("❌ 3 wrong moves — tap 🔓 Reveal Answer below to see the solution")
-        } else {
-          setMsg(`❌ Wrong move — try again! (${3 - newCount} hint${3 - newCount === 1 ? "" : "s"} left)`)
-        }
-        return
-      }
-
-      // Correct move
-      const isCapture = board[row][col] !== null
-      const nextBoard = applyAndLog(board, expected, true)
-      setBoard(nextBoard)
-      setLastMove(expected)
-      setSelected(null)
-      setMsg(null)
-      setWrongAttempts(0)
-
-      if (isCapture) { burst(col, row, pieceSet.burstColor); playCaptureSound(themeId); onCaptureSuccess?.() }
-      else { burst(col, row, theme.hintColor); playMoveSound(themeId) }
-      onMove?.(expected)
-
-      const nextIdx = moveIdx + 1
-      if (nextIdx >= solutionMoves.length) {
-        setSolved(true)
-        setMsg("🎉 Brilliant! Puzzle cleared!")
-        playSolveSound(themeId); onSolve?.(); onNodeCleared?.()
-        return
-      }
-
-      // Auto-play opponent response
-      setPlayerTurn(false)
-      setMoveIdx(nextIdx)
-      setTimeout(() => {
-        const oppMove = solutionMoves[nextIdx]
-        const oppTc = FILES.indexOf(oppMove[2])
-        const oppTr = 8 - parseInt(oppMove[3])
-        const oppCapture = nextBoard[oppTr][oppTc] !== null
-        const oppBoard = applyAndLog(nextBoard, oppMove, false)
-        setBoard(oppBoard)
-        setLastMove(oppMove)
-        setMoveIdx(nextIdx + 1)
-        if (oppCapture) { burst(oppTc, oppTr, "#ff4444"); playCaptureSound(themeId) }
-        else playMoveSound(themeId)
-        if (nextIdx + 1 >= solutionMoves.length) {
-          setSolved(true); setMsg("🎉 Brilliant! Puzzle cleared!")
-          playSolveSound(themeId); onSolve?.(); onNodeCleared?.()
-        } else {
-          setPlayerTurn(true)
-        }
-      }, 700)
+  function handlePointerMove(e: React.PointerEvent) {
+    const down = pointerDownRef.current
+    if (!down) return
+    const dx = e.clientX - down.x
+    const dy = e.clientY - down.y
+    if (!down.dragging && Math.hypot(dx, dy) > 5) down.dragging = true
+    if (down.dragging) {
+      setDragSquare(down.square)
+      const rect = boardRef.current?.getBoundingClientRect()
+      if (rect) setDragPos({ x: ((e.clientX - rect.left) / rect.width) * 100, y: ((e.clientY - rect.top) / rect.height) * 100 })
+      setHoverSquare(squareFromPoint(e.clientX, e.clientY))
     }
   }
 
-  function showHint() {
-    if (solved || moveIdx >= solutionMoves.length || !playerTurn) return
-    const move = solutionMoves[moveIdx]
-    const fc = FILES.indexOf(move[0])
-    const fr = 8 - parseInt(move[1])
-    setSelected([fc, fr])
-    setHint(true)
-    setMsg("💡 Hint — find the best continuation from this piece!")
-  }
-
-  // ── Render ──────────────────────────────────────────────────────────────────
-
-  const squares: React.ReactNode[] = []
-
-  for (let dispRow = 0; dispRow < 8; dispRow++) {
-    for (let dispCol = 0; dispCol < 8; dispCol++) {
-      const [col, row] = squareCoords(dispCol, dispRow)
-      const piece = board[row][col]
-      const isLight = (col + row) % 2 === 0
-      const isSelected = selected !== null && selected[0] === col && selected[1] === row
-      const isLastMove = lastMove !== null && (
-        (FILES[col] === lastMove[0] && String(8 - row) === lastMove[1]) ||
-        (FILES[col] === lastMove[2] && String(8 - row) === lastMove[3])
-      )
-      const isRevealFrom = revealSquares !== null && revealSquares.from[0] === col && revealSquares.from[1] === row
-      const isRevealTo   = revealSquares !== null && revealSquares.to[0]   === col && revealSquares.to[1]   === row
-
-      const baseColor = isLight ? theme.lightSquare : theme.darkSquare
-      let bgColor = baseColor
-      if (isRevealFrom || isRevealTo) bgColor = "rgba(255,100,0,0.6)"
-      else if (isSelected) bgColor = theme.selectedSquare
-      else if (isLastMove) bgColor = theme.lastMoveSquare
-
-      const isHintDest = hint && moveIdx < solutionMoves.length &&
-        FILES[col] === solutionMoves[moveIdx][2] &&
-        String(8 - row) === solutionMoves[moveIdx][3]
-
-      const isWhitePiece = piece && piece === piece.toUpperCase()
-      const pieceColor   = piece ? (isWhitePiece ? pieceSet.whitePiece : pieceSet.blackPiece) : undefined
-      const pieceShadow  = piece ? (isWhitePiece ? pieceSet.whiteShadow : pieceSet.blackShadow) : undefined
-      const lichessFile  = piece ? PIECE_TO_LICHESS[piece] : undefined
-
-      squares.push(
-        <div
-          key={`${dispCol}-${dispRow}`}
-          onClick={() => handleSquareClick(dispCol, dispRow)}
-          style={{
-            position: "absolute",
-            left: dispCol * SQUARE_SIZE, top: dispRow * SQUARE_SIZE,
-            width: SQUARE_SIZE, height: SQUARE_SIZE,
-            background: bgColor,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: solved ? "default" : "pointer",
-            userSelect: "none", boxSizing: "border-box",
-          }}
-        >
-          {isHintDest && !piece && (
-            <div style={{ width: 14, height: 14, borderRadius: "50%", background: theme.hintColor + "99", border: `2px solid ${theme.hintColor}` }} />
-          )}
-          {isHintDest && piece && (
-            <div style={{ position: "absolute", inset: 3, borderRadius: 4, border: `2px solid ${theme.hintColor}`, boxShadow: `0 0 8px ${theme.hintColor}88`, pointerEvents: "none" }} />
-          )}
-          {piece && (
-            pieceSet.imageBase && lichessFile ? (
-              <img
-                src={`${pieceSet.imageBase}${lichessFile}.svg`}
-                alt={piece} draggable={false}
-                style={{
-                  width: SQUARE_SIZE - 4, height: SQUARE_SIZE - 4,
-                  objectFit: "contain", pointerEvents: "none", position: "relative", zIndex: 1,
-                  filter: isSelected ? "drop-shadow(0 0 4px rgba(255,215,0,0.9))" : undefined,
-                }}
-              />
-            ) : (
-              <span style={{ fontSize: 30, lineHeight: 1, color: pieceColor, textShadow: pieceShadow, position: "relative", zIndex: 1 }}>
-                {PIECE_UNICODE[piece] ?? piece}
-              </span>
-            )
-          )}
-          {dispCol === 0 && (
-            <span style={{ position: "absolute", top: 2, left: 2, fontSize: 9, fontWeight: 700, color: isLight ? theme.darkSquare : theme.lightSquare, opacity: 0.85, lineHeight: 1, pointerEvents: "none" }}>
-              {flipped ? row + 1 : 8 - row}
-            </span>
-          )}
-          {dispRow === 7 && (
-            <span style={{ position: "absolute", bottom: 2, right: 3, fontSize: 9, fontWeight: 700, color: isLight ? theme.darkSquare : theme.lightSquare, opacity: 0.85, lineHeight: 1, pointerEvents: "none" }}>
-              {FILES[col]}
-            </span>
-          )}
-        </div>
-      )
+  function handlePointerUp(e: React.PointerEvent) {
+    const down = pointerDownRef.current
+    pointerDownRef.current = null
+    setDragSquare(null)
+    setDragPos(null)
+    setHoverSquare(null)
+    if (!down || !down.dragging) return // plain click already handled on pointerdown
+    const target = squareFromPoint(e.clientX, e.clientY)
+    if (target && target !== down.square && legalTargets(down.square).includes(target)) {
+      commitMove(down.square, target)
     }
   }
 
-  const toMoveLabel = playerColor === "w" ? "White to move" : "Black to move"
-  const toMoveColor = playerColor === "w" ? "#f0d9b5" : "#2d2d2d"
-  const toMoveBorder = playerColor === "w" ? "#c8a450" : "#888"
+  // Keyboard activation (Enter/Space fire a synthetic click with detail === 0,
+  // distinguishing it from real pointer-driven clicks already handled above).
+  function handleKeyboardClick(square: string, e: React.MouseEvent) {
+    if (e.detail !== 0 || !interactive || pendingPromotion) return
+    const piece = boardMap[square]
+    if (selected && selected !== square && selectedTargets.includes(square) && !(piece && canMove(piece.color))) {
+      commitMove(selected, square)
+      return
+    }
+    if (piece && canMove(piece.color)) { setSelected(square); return }
+    if (selected) setSelected(null)
+  }
+
+  function handleSquareKeyDown(square: string, e: React.KeyboardEvent) {
+    const arrows: Record<string, [number, number]> = {
+      ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0],
+    }
+    const delta = arrows[e.key]
+    if (!delta) return
+    e.preventDefault()
+    const { col, row } = squareCoords(square, flipped)
+    const nextCol = Math.min(7, Math.max(0, col + delta[0]))
+    const nextRow = Math.min(7, Math.max(0, row + delta[1]))
+    const nextSquare = squareAt(nextCol, nextRow, flipped)
+    const btn = boardRef.current?.querySelector<HTMLButtonElement>(`[data-square="${nextSquare}"]`)
+    btn?.focus()
+  }
+
+  const draggedPiece = dragSquare ? boardMap[dragSquare] : null
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+    <div className={className}>
+      <div
+        ref={boardRef}
+        className="relative w-full touch-none select-none overflow-hidden rounded-xl shadow-lg"
+        style={{ aspectRatio: "1", border: `2px solid ${theme.border}`, boxShadow: theme.glow ?? "0 4px 24px rgba(0,0,0,0.25)" }}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+      >
+        {Array.from({ length: 64 }, (_, i) => {
+          const col = i % 8
+          const row = Math.floor(i / 8)
+          const square = squareAt(col, row, flipped)
+          const piece = boardMap[square]
+          const isLight = (col + row) % 2 === 0
+          const isSelected = selected === square
+          const isTarget = settings.showLegalMoves && selectedTargets.includes(square)
+          const isLastMove = settings.highlightLastMove && !!lastMove && (lastMove.from === square || lastMove.to === square)
+          const isChecked = checkedSquare === square
+          const isHoverTarget = hoverSquare === square && dragSquare && legalTargets(dragSquare).includes(square)
 
-      {/* ── Who to move badge ── */}
-      {!freePlay && (
-        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: 20, background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.08)" }}>
-          <div style={{ width: 12, height: 12, borderRadius: 2, background: toMoveColor, border: `2px solid ${toMoveBorder}`, boxShadow: playerColor === "w" ? "0 0 6px rgba(240,217,181,0.6)" : "none" }} />
-          <span style={{ fontSize: 11, fontWeight: 700, color: playerColor === "w" ? "#f0d9b5" : "#94a3b8", letterSpacing: "0.05em" }}>
-            {toMoveLabel}
-          </span>
-          {!playerTurn && !solved && (
-            <span style={{ fontSize: 10, color: "#64748b", marginLeft: 4 }}>opponent thinking…</span>
-          )}
-        </div>
-      )}
+          let bg = isLight ? theme.lightSquare : theme.darkSquare
+          if (isLastMove) bg = theme.lastMoveSquare
+          if (isHoverTarget) bg = theme.selectedSquare
+          if (isSelected) bg = theme.selectedSquare
 
-      {/* ── Board frame ── */}
-      <div style={{ padding: 4, background: "#3d1a00", borderRadius: 8, boxShadow: "0 12px 48px rgba(0,0,0,0.7), 0 2px 8px rgba(0,0,0,0.5)" }}>
-        <div style={{ position: "relative", width: BOARD_PX, height: BOARD_PX, border: `2px solid ${theme.border}`, borderRadius: 4, overflow: "hidden", boxShadow: theme.glow ?? "0 4px 24px rgba(0,0,0,0.4)" }}>
-          {squares}
-          <canvas ref={canvasRef} width={BOARD_PX} height={BOARD_PX} style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 10 }} />
-        </div>
-      </div>
+          const key = piece ? pieceKey(piece.type, piece.color) : null
+          const lichessFile = key && pieceSet.imageBase ? lichessPieceFile(key) : undefined
+          const isBeingDragged = dragSquare === square
 
-      {/* ── Feedback message ── */}
-      {msg && (
-        <div style={{
-          fontSize: 13, fontWeight: 700,
-          color: solved ? "#4ade80" : msg.startsWith("❌") ? "#f87171" : "#fbbf24",
-          textAlign: "center",
-          padding: "6px 16px",
-          background: solved ? "rgba(16,185,129,0.1)" : msg.startsWith("❌") ? "rgba(248,113,113,0.08)" : "rgba(251,191,36,0.08)",
-          border: `1px solid ${solved ? "rgba(16,185,129,0.25)" : msg.startsWith("❌") ? "rgba(248,113,113,0.2)" : "rgba(251,191,36,0.2)"}`,
-          borderRadius: 10, maxWidth: BOARD_PX,
-        }}>
-          {msg}
-        </div>
-      )}
+          return (
+            <button
+              key={square}
+              type="button"
+              data-square={square}
+              tabIndex={interactive ? 0 : -1}
+              aria-label={piece ? `${square}, ${piece.color === "w" ? "White" : "Black"} ${piece.type}` : square}
+              onPointerDown={e => handlePointerDown(square, e)}
+              onClick={e => handleKeyboardClick(square, e)}
+              onKeyDown={e => handleSquareKeyDown(square, e)}
+              className="absolute flex cursor-pointer items-center justify-center border-0 p-0 outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-offset-[-2px]"
+              style={{
+                left: `${col * 12.5}%`, top: `${row * 12.5}%`, width: "12.5%", height: "12.5%",
+                background: bg,
+                boxShadow: isChecked ? "inset 0 0 0 3px #ef4444, inset 0 0 16px rgba(239,68,68,0.6)" : undefined,
+                cursor: interactive && piece && canMove(piece.color) ? "grab" : interactive ? "pointer" : "default",
+              }}
+            >
+              {isTarget && !piece && (
+                <span aria-hidden style={{ width: "28%", height: "28%", borderRadius: "50%", background: "rgba(0,0,0,0.22)" }} />
+              )}
+              {isTarget && piece && (
+                <span aria-hidden style={{ position: "absolute", inset: 2, borderRadius: 4, border: "3px solid rgba(0,0,0,0.28)" }} />
+              )}
+              {piece && !isBeingDragged && (
+                lichessFile ? (
+                  <img
+                    src={`${pieceSet.imageBase}${lichessFile}.svg`} alt="" draggable={false}
+                    style={{ width: "82%", height: "82%", objectFit: "contain", transition: settings.animateMoves ? "transform 0.1s ease" : undefined, transform: isSelected ? "scale(1.08)" : undefined }}
+                  />
+                ) : (
+                  <span style={{ fontSize: "min(7vw,40px)", lineHeight: 1, color: piece.color === "w" ? pieceSet.whitePiece : pieceSet.blackPiece, textShadow: piece.color === "w" ? pieceSet.whiteShadow : pieceSet.blackShadow, transition: settings.animateMoves ? "transform 0.1s ease" : undefined, transform: isSelected ? "scale(1.08)" : undefined }}>
+                    {PIECE_UNICODE[key!]}
+                  </span>
+                )
+              )}
+              {settings.showCoordinates && col === (flipped ? 7 : 0) && (
+                <span aria-hidden className="pointer-events-none absolute top-0.5 left-1 text-[9px] font-bold leading-none" style={{ color: isLight ? theme.darkSquare : theme.lightSquare, opacity: 0.85 }}>
+                  {square[1]}
+                </span>
+              )}
+              {settings.showCoordinates && row === (flipped ? 0 : 7) && (
+                <span aria-hidden className="pointer-events-none absolute bottom-0.5 right-1 text-[9px] font-bold leading-none" style={{ color: isLight ? theme.darkSquare : theme.lightSquare, opacity: 0.85 }}>
+                  {square[0]}
+                </span>
+              )}
+            </button>
+          )
+        })}
 
-      {/* ── Solution move log (shown after solving) ── */}
-      {solved && moveLog.length > 0 && (
-        <div style={{ maxWidth: BOARD_PX, width: "100%", padding: "10px 12px", background: "rgba(0,0,0,0.3)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.06)" }}>
-          <p style={{ fontSize: 10, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Solution line</p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 8px" }}>
-            {moveLog.map((m, i) => (
-              <span key={i} style={{
-                fontSize: 12, fontWeight: 700,
-                color: m.isPlayer ? "#4ade80" : "#f87171",
-                background: m.isPlayer ? "rgba(74,222,128,0.08)" : "rgba(248,113,113,0.08)",
-                border: `1px solid ${m.isPlayer ? "rgba(74,222,128,0.2)" : "rgba(248,113,113,0.2)"}`,
-                borderRadius: 6, padding: "2px 6px",
-              }}>
-                {m.symbol}{m.from}→{m.to}
-              </span>
-            ))}
+        {/* Dragged piece ghost, follows the pointer. Positioned in board-relative
+            percentages (not px) so no DOM ref read is needed at render time. */}
+        {draggedPiece && dragPos && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute z-30 flex items-center justify-center"
+            style={{ left: `calc(${dragPos.x}% - 6.25%)`, top: `calc(${dragPos.y}% - 6.25%)`, width: "12.5%", height: "12.5%" }}
+          >
+            {(() => {
+              const key = pieceKey(draggedPiece.type, draggedPiece.color)
+              const lichessFile = pieceSet.imageBase ? lichessPieceFile(key) : undefined
+              return lichessFile ? (
+                <img src={`${pieceSet.imageBase}${lichessFile}.svg`} alt="" style={{ width: "90%", height: "90%", filter: "drop-shadow(0 6px 10px rgba(0,0,0,0.4))" }} />
+              ) : (
+                <span style={{ fontSize: "min(7.5vw,44px)", color: draggedPiece.color === "w" ? pieceSet.whitePiece : pieceSet.blackPiece, textShadow: draggedPiece.color === "w" ? pieceSet.whiteShadow : pieceSet.blackShadow, filter: "drop-shadow(0 6px 10px rgba(0,0,0,0.4))" }}>
+                  {PIECE_UNICODE[key]}
+                </span>
+              )
+            })()}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ── Controls ── */}
-      {!solved && !freePlay && (
-        <div style={{ display: "flex", gap: 8, maxWidth: BOARD_PX, width: "100%" }}>
-          {playerTurn && !revealed && (
-            <button onClick={showHint} style={{ flex: 1, fontSize: 12, padding: "6px 10px", background: "rgba(255,255,255,0.05)", border: `1px solid ${theme.hintColor}44`, borderRadius: 8, color: theme.hintColor, cursor: "pointer" }}>
-              💡 Show Hint
-            </button>
-          )}
-          {wrongAttempts >= 3 && !revealed && (
-            <button onClick={handleReveal} style={{ flex: 1, fontSize: 12, padding: "6px 10px", background: "rgba(255,100,0,0.1)", border: "1px solid rgba(255,100,0,0.3)", borderRadius: 8, color: "#fb923c", cursor: "pointer", fontWeight: 700 }}>
-              🔓 Reveal Answer
-            </button>
-          )}
-        </div>
-      )}
+        {pendingPromotion && (
+          <PromotionPicker
+            square={pendingPromotion.to}
+            color={pendingPromotion.color}
+            flipped={flipped}
+            pieceSet={pieceSet}
+            onPick={resolvePromotion}
+            onCancel={() => setPendingPromotion(null)}
+          />
+        )}
+      </div>
     </div>
   )
+}
+
+/** Exposed so a "game end" sound (checkmate/stalemate) can be triggered by
+ * callers that know the activity finished — kept separate from per-move
+ * sounds since ChessBoard itself doesn't track game-over state. */
+export function playGameEndSound(theme: ThemeId, enabled: boolean) {
+  if (enabled) playSolveSound(theme)
 }
