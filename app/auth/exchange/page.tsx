@@ -12,6 +12,8 @@ export default function AuthExchangePage() {
     const params = new URLSearchParams(hash)
     const access_token  = params.get("access_token")
     const refresh_token = params.get("refresh_token")
+    const redirect       = params.get("redirect")
+    const destination     = redirect && redirect.startsWith("/") ? redirect : "/dashboard"
 
     // Clear the fragment immediately so tokens aren't exposed in browser history
     history.replaceState(null, "", window.location.pathname + window.location.search)
@@ -32,7 +34,7 @@ export default function AuthExchangePage() {
         setMsg("Session could not be established. Please log in again.")
         setStatus("error")
       } else {
-        window.location.replace("/dashboard")
+        window.location.replace(destination)
       }
     })
   }, [])

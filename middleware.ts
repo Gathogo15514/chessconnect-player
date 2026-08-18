@@ -24,8 +24,16 @@ export async function middleware(req: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
   const path = req.nextUrl.pathname
 
-  if (!session && !path.startsWith("/login") && !path.startsWith("/auth")) {
-    return NextResponse.redirect(new URL("/login", req.url))
+  const publicPaths = ["/login", "/auth", "/reset-password"]
+  const isPublicPath = publicPaths.some(p => path === p || path.startsWith(p + "/"))
+
+  // Deep links: an unauthenticated visit to e.g. /puzzles is sent to login
+  // with the original path preserved, so login returns them there instead
+  // of the generic dashboard.
+  if (!session && !isPublicPath) {
+    const url = new URL("/login", req.url)
+    if (path !== "/") url.searchParams.set("redirect", path)
+    return NextResponse.redirect(url)
   }
 
   if (session) {
@@ -35,8 +43,10 @@ export async function middleware(req: NextRequest) {
 
     // M-2: Block non-player roles from accessing this portal entirely.
     // Coaches, admins etc. who somehow have a player profile must not get
-    // student-portal access under their privileged identity.
-    if (!path.startsWith("/login") && !path.startsWith("/auth")) {
+    // student-portal access under their privileged identity. Send them to
+    // the actual management platform rather than just erroring here — the
+    // URL alone must never be trusted as a role signal in either direction.
+    if (!isPublicPath) {
       const { data: profile } = await supabase
         .from("profiles")
         .select("role_name")
@@ -44,9 +54,8 @@ export async function middleware(req: NextRequest) {
         .single()
 
       if (profile && profile.role_name !== "player") {
-        const url = new URL("/login", req.url)
-        url.searchParams.set("error", "wrong_portal")
-        return NextResponse.redirect(url)
+        const mainUrl = process.env.NEXT_PUBLIC_MAIN_API_URL ?? "https://chesslead.org"
+        return NextResponse.redirect(`${mainUrl}/dashboard?error=wrong_portal`)
       }
     }
   }

@@ -1,15 +1,23 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { Suspense, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 
-export default function LoginPage() {
+const ERROR_MESSAGES: Record<string, string> = {
+  wrong_portal: "That account isn't a player account — please use the main ChessLead login instead.",
+}
+
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirect = searchParams.get("redirect")
+  const errorParam = searchParams.get("error")
   const [email,    setEmail]    = useState("")
   const [password, setPassword] = useState("")
   const [loading,  setLoading]  = useState(false)
-  const [error,    setError]    = useState<string | null>(null)
+  const [error,    setError]    = useState<string | null>(errorParam ? (ERROR_MESSAGES[errorParam] ?? null) : null)
 
   async function handleLogin(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -17,7 +25,8 @@ export default function LoginPage() {
     const supabase = createClient()
     const { error: err } = await supabase.auth.signInWithPassword({ email, password })
     if (err) { setError(err.message); setLoading(false); return }
-    router.refresh(); router.push("/dashboard")
+    router.refresh()
+    router.push(redirect && redirect.startsWith("/") ? redirect : "/dashboard")
   }
 
   return (
@@ -140,7 +149,12 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label className="cc-label">Password</label>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <label className="cc-label">Password</label>
+                  <Link href="/reset-password" style={{ fontSize: 12, color: "#1A6B42", fontWeight: 600, textDecoration: "none" }}>
+                    Forgot password?
+                  </Link>
+                </div>
                 <input
                   className="cc-input"
                   type="password" required autoComplete="current-password"
@@ -188,5 +202,13 @@ export default function LoginPage() {
         }
       `}</style>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#F7F3EC" }} />}>
+      <LoginForm />
+    </Suspense>
   )
 }
