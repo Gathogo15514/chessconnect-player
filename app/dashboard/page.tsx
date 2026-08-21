@@ -27,7 +27,6 @@ export default function DashboardPage() {
   const router = useRouter()
   const [name, setName] = useState<string | null>(null)
   const [player, setPlayer] = useState<Player | null>(null)
-  const [streak, setStreak] = useState(0)
   const [sessions, setSessions] = useState<Session[]>([])
   const [ratingHistory, setRatingHistory] = useState<RatingEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -55,7 +54,7 @@ export default function DashboardPage() {
       const f = [pl.school_id && `school_id.eq.${pl.school_id}`, pl.club_id && `club_id.eq.${pl.club_id}`]
         .filter(Boolean).join(",") || "id.eq.00000000-0000-0000-0000-000000000000"
 
-      const [sR, rR, gpR] = await Promise.all([
+      const [sR, rR] = await Promise.all([
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (supabase.from("sessions") as any)
           .select("id, title, session_date, start_time, status, venue, coaches(profiles(full_name))")
@@ -65,14 +64,10 @@ export default function DashboardPage() {
         (supabase.from("player_ratings_history") as any)
           .select("rating, recorded_at")
           .eq("player_id", pl.id).order("recorded_at", { ascending: false }).limit(10),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (supabase.from("player_game_profiles") as any)
-          .select("streak_current").eq("player_id", pl.id).maybeSingle(),
       ])
 
       setSessions(sR.data ?? [])
       setRatingHistory(rR.data ?? [])
-      setStreak(gpR.data?.streak_current ?? 0)
       setLoading(false)
     })
   }, [router])
@@ -120,7 +115,6 @@ export default function DashboardPage() {
         focusHeadline={focusHeadline}
         focusDetail={focusDetail}
         focusHref={focusHref}
-        streak={streak}
       />
 
       <div className="grid gap-3.5 md:grid-cols-3">
