@@ -2,14 +2,18 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, GraduationCap, Grid2x2, Swords, TrendingUp } from "lucide-react"
+import { LayoutDashboard, GraduationCap, Grid2x2, TrendingUp, Trophy } from "lucide-react"
 
+// Five slots by design (mobile tab bar, not a scrollable list) — Games
+// stays reachable from the desktop Sidebar and its own URL, just not a
+// primary tab, so Leaderboard (part of the core coach->teach->assign->
+// track->improve loop) has room here instead.
 const TABS = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/train",     label: "Train",     icon: GraduationCap },
-  { href: "/puzzles",   label: "Puzzles",   icon: Grid2x2 },
-  { href: "/games",     label: "Games",     icon: Swords },
-  { href: "/progress",  label: "Progress",  icon: TrendingUp },
+  { href: "/dashboard",   label: "Dashboard",   icon: LayoutDashboard },
+  { href: "/train",       label: "Train",       icon: GraduationCap },
+  { href: "/puzzles",     label: "Puzzles",     icon: Grid2x2 },
+  { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+  { href: "/progress",    label: "Progress",    icon: TrendingUp },
 ]
 
 export function BottomNav() {

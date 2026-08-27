@@ -1,3 +1,5 @@
+import { Trophy } from "lucide-react"
+
 export function FocusBand({
   rating,
   ratingDelta,
@@ -6,6 +8,7 @@ export function FocusBand({
   focusHeadline,
   focusDetail,
   focusHref,
+  leaderboardRank,
 }: {
   rating: number | null
   ratingDelta: number | null
@@ -14,6 +17,9 @@ export function FocusBand({
   focusHeadline: string
   focusDetail: string
   focusHref: string
+  /** This month's leaderboard position among the player's coach's other
+   * students, or null if not ranked yet (no completed exercises this month). */
+  leaderboardRank: number | null
 }) {
   return (
     <div className="relative mb-4 overflow-hidden rounded-2xl bg-gradient-to-br from-brand-green to-brand-green-mid p-6 md:p-7">
@@ -24,7 +30,7 @@ export function FocusBand({
           backgroundSize: "28px 28px",
         }}
       />
-      <div className="relative grid gap-6 md:grid-cols-[auto_1fr] md:items-center md:gap-8">
+      <div className="relative grid gap-6 md:grid-cols-[auto_1fr_auto] md:items-center md:gap-8">
         <div>
           <p className="mb-1 text-[10.5px] font-semibold uppercase tracking-wider text-white/50">Current rating</p>
           <div className="flex items-baseline gap-2.5">
@@ -55,6 +61,18 @@ export function FocusBand({
             Resume training →
           </a>
         </div>
+
+        <div className="hidden self-stretch w-px bg-white/10 md:block" />
+
+        <a href="/leaderboard" className="flex items-center gap-3 no-underline md:flex-col md:items-end md:text-right">
+          <Trophy size={22} className="text-brand-gold" fill="currentColor" fillOpacity={0.25} />
+          <div>
+            <span className="font-serif text-2xl font-bold leading-none text-white tabular-nums">
+              {leaderboardRank ? `#${leaderboardRank}` : "—"}
+            </span>
+            <p className="mt-0.5 text-[10.5px] text-white/50">this month</p>
+          </div>
+        </a>
       </div>
     </div>
   )

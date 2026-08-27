@@ -11,6 +11,8 @@ import { MiniBoard } from "@/components/ui/mini-board"
 import { Card } from "@/components/ui/card"
 import { fmtTime, fmtWeekday } from "@/lib/dates"
 
+const MAIN_API = process.env.NEXT_PUBLIC_MAIN_API_URL ?? "https://chesslead.org"
+
 type Player = {
   id: string; fide_id?: string | null
   current_rating?: number | null; school_id?: string | null; club_id?: string | null
@@ -29,6 +31,7 @@ export default function DashboardPage() {
   const [player, setPlayer] = useState<Player | null>(null)
   const [sessions, setSessions] = useState<Session[]>([])
   const [ratingHistory, setRatingHistory] = useState<RatingEntry[]>([])
+  const [leaderboardRank, setLeaderboardRank] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -69,6 +72,14 @@ export default function DashboardPage() {
       setSessions(sR.data ?? [])
       setRatingHistory(rR.data ?? [])
       setLoading(false)
+
+      // Non-blocking — the dashboard renders fine without a rank yet.
+      fetch(`${MAIN_API}/api/v1/leaderboard`, {
+        headers: { Authorization: `Bearer ${session.access_token}` }, cache: "no-store",
+      })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => setLeaderboardRank(d?.me?.rank ?? null))
+        .catch(() => {})
     })
   }, [router])
 
@@ -115,6 +126,7 @@ export default function DashboardPage() {
         focusHeadline={focusHeadline}
         focusDetail={focusDetail}
         focusHref={focusHref}
+        leaderboardRank={leaderboardRank}
       />
 
       <div className="grid gap-3.5 md:grid-cols-3">

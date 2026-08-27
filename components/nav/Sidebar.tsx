@@ -2,16 +2,17 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, GraduationCap, Grid2x2, Swords, TrendingUp, BookOpen, UserRound } from "lucide-react"
+import { LayoutDashboard, GraduationCap, Grid2x2, Swords, TrendingUp, BookOpen, UserRound, Trophy } from "lucide-react"
 
 const NAV = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/train",     label: "Train",     icon: GraduationCap },
-  { href: "/puzzles",   label: "Puzzles",   icon: Grid2x2 },
-  { href: "/games",     label: "Games",     icon: Swords },
-  { href: "/progress",  label: "Progress",  icon: TrendingUp },
-  { href: "/lessons",   label: "Lessons",   icon: BookOpen },
-  { href: "/coach",     label: "Coach",     icon: UserRound },
+  { href: "/dashboard",   label: "Dashboard",   icon: LayoutDashboard },
+  { href: "/train",       label: "Train",       icon: GraduationCap },
+  { href: "/puzzles",     label: "Puzzles",     icon: Grid2x2 },
+  { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+  { href: "/games",       label: "Games",       icon: Swords },
+  { href: "/progress",    label: "Progress",    icon: TrendingUp },
+  { href: "/lessons",     label: "Lessons",     icon: BookOpen },
+  { href: "/coach",       label: "Coach",       icon: UserRound },
 ]
 
 export function Sidebar({ coachName, nextSession }: { coachName?: string | null; nextSession?: string | null }) {
